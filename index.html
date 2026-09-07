@@ -103,88 +103,87 @@
     </form>
   </div>
 
-  <script>
-    var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPGbb6wVaFi8ZU3RRC1EPtJyaCypUJ_FM9xq_v4zBzIqI-J5jfhyeorWy4gPA1QuO6/exec';
+ <script>
+  var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyPGbb6wVaFi8ZU3RRC1EPtJyaCypUJ_FM9xq_v4zBzlql-J5jfhyeorWy4gPA1Qu06/exec';
 
-    window.addEventListener('DOMContentLoaded', function() {
-      var coffeeGroup = document.getElementById('coffeeGroup');
+  window.addEventListener('DOMContentLoaded', function() {
+    var coffeeGroup = document.getElementById('coffeeGroup');
+    var script = document.createElement('script');
+    
+    window.handleLoyverseMenu = function(data) {
+      if (!data.items || data.items.length === 0) {
+        coffeeGroup.innerHTML = '<div style="grid-column: 1/-1; color: #c0392b;">No menu items found in Loyverse.</div>';
+        return;
+      }
 
-      fetch(SCRIPT_URL)
-        .then(function(res) { return res.json(); })
-        .then(function(data) {
-          if (!data.items || data.items.length === 0) {
-            coffeeGroup.innerHTML = '<div style="grid-column: 1/-1; color: #c0392b;">No menu items found in Loyverse.</div>';
-            return;
-          }
-
-          coffeeGroup.innerHTML = '';
-          data.items.forEach(function(item, index) {
-            var price = '';
-            if (item.variants && item.variants[0] && item.variants[0].default_price) {
-              price = ' - $' + parseFloat(item.variants[0].default_price).toFixed(2);
-            }
-            
-            var checked = index === 0 ? 'checked' : '';
-            var label = document.createElement('label');
-            label.className = 'option';
-            label.innerHTML = '<input type="radio" name="coffee" value="' + item.item_name + '" ' + checked + '> ' + item.item_name + price;
-            coffeeGroup.appendChild(label);
-          });
-        })
-        .catch(function(err) {
-          console.error('Loyverse fetch error:', err);
-          coffeeGroup.innerHTML = '<div style="grid-column: 1/-1; color: #c0392b;">Failed to load Loyverse menu.</div>';
-        });
-    });
-
-    var form = document.getElementById('orderForm');
-    var statusMsg = document.getElementById('statusMsg');
-    var submitBtn = document.getElementById('submitBtn');
-
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      var name = document.getElementById('name').value.trim();
-      var coffeeSelected = form.querySelector('input[name="coffee"]:checked');
-      var coffee = coffeeSelected ? coffeeSelected.value : '';
-      var sizeSelected = form.querySelector('input[name="size"]:checked');
-      var size = sizeSelected ? sizeSelected.value : '';
-      var notes = document.getElementById('notes').value.trim();
-
-      var payload = {
-        customerName: name,
-        coffee: coffee,
-        size: size,
-        notes: notes,
-        timestamp: new Date().toISOString()
-      };
-
-      submitBtn.disabled = true;
-      statusMsg.className = '';
-      statusMsg.textContent = 'Placing your order...';
-
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(payload)
-      })
-      .then(function() {
-        statusMsg.className = 'success';
-        statusMsg.textContent = 'Order placed! See you soon, ' + name + '.';
-        setTimeout(function() {
-          form.reset();
-          statusMsg.textContent = '';
-          statusMsg.className = '';
-          submitBtn.disabled = false;
-        }, 2000);
-      })
-      .catch(function(err) {
-        statusMsg.className = 'error';
-        statusMsg.textContent = 'Something went wrong. Please try again.';
-        submitBtn.disabled = false;
+      coffeeGroup.innerHTML = '';
+      data.items.forEach(function(item, index) {
+        var price = '';
+        if (item.variants && item.variants[0] && item.variants[0].default_price) {
+          price = ' - $' + parseFloat(item.variants[0].default_price).toFixed(2);
+        }
+        
+        var checked = index === 0 ? 'checked' : '';
+        var label = document.createElement('label');
+        label.className = 'option';
+        label.innerHTML = '<input type="radio" name="coffee" value="' + item.item_name + '" ' + checked + '> ' + item.item_name + price;
+        coffeeGroup.appendChild(label);
       });
+    };
+
+    script.src = SCRIPT_URL + '?callback=handleLoyverseMenu';
+    script.onerror = function() {
+      coffeeGroup.innerHTML = '<div style="grid-column: 1/-1; color: #c0392b;">Failed to load Loyverse menu.</div>';
+    };
+    document.body.appendChild(script);
+  });
+
+  var form = document.getElementById('orderForm');
+  var statusMsg = document.getElementById('statusMsg');
+  var submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    var name = document.getElementById('name').value.trim();
+    var coffeeSelected = form.querySelector('input[name="coffee"]:checked');
+    var coffee = coffeeSelected ? coffeeSelected.value : '';
+    var sizeSelected = form.querySelector('input[name="size"]:checked');
+    var size = sizeSelected ? sizeSelected.value : '';
+    var notes = document.getElementById('notes').value.trim();
+
+    var payload = {
+      customerName: name,
+      coffee: coffee,
+      size: size,
+      notes: notes,
+      timestamp: new Date().toISOString()
+    };
+
+    submitBtn.disabled = true;
+    statusMsg.className = '';
+    statusMsg.textContent = 'Placing your order...';
+
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    })
+    .then(function() {
+      statusMsg.className = 'success';
+      statusMsg.textContent = 'Order placed! See you soon, ' + name + '.';
+      setTimeout(function() {
+        form.reset();
+        statusMsg.textContent = '';
+        statusMsg.className = '';
+        submitBtn.disabled = false;
+      }, 2000);
+    })
+    .catch(function(err) {
+      statusMsg.className = 'error';
+      statusMsg.textContent = 'Something went wrong. Please try again.';
+      submitBtn.disabled = false;
     });
-  </script>
-</body>
-</html>
+  });
+</script>
