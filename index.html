@@ -1,27 +1,189 @@
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPGbb6wVaFi8ZU3RRC1EPtJyaCypUJ_FM9xq_v4zBzIqI-J5jfhyeorWy4gPA1QuO6/exec";
-async function loadMenu() {
-  const select = document.getElementById("coffeeType");
-  const status = document.getElementById("status");
-
-  try {
-    const res = await fetch(APPS_SCRIPT_URL).then(r => r.json());
-
-    if (res.status === "success" && res.items) {
-      select.innerHTML = '<option value="">-- Select Coffee --</option>';
-      res.items.forEach(item => {
-        const opt = document.createElement("option");
-        opt.value = item.name;
-        opt.textContent = item.price ? `${item.name} ($${item.price})` : item.name;
-        select.appendChild(opt);
-      });
-      if (status) status.textContent = "";
-    } else {
-      throw new Error(res.message || "Failed to parse options");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coffee Xpress - Order</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: #f4f4f7;
+      margin: 0;
+      padding: 20px;
+      color: #333;
     }
-  } catch (err) {
-    console.error(err);
-    if (status) status.textContent = "Failed to load menu options.";
-  }
-}
+    .order-card {
+      max-width: 500px;
+      margin: 20px auto;
+      background: #ffffff;
+      padding: 24px;
+      border-radius: 12px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+    }
+    h2 { margin-top: 0; color: #1a1a1a; text-align: center; }
+    .form-group { margin-bottom: 16px; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; }
+    input, select, textarea {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      font-size: 15px;
+    }
+    button {
+      width: 100%;
+      background: #0070f3;
+      color: white;
+      border: none;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    button:hover { background: #0051a2; }
+    button:disabled { background: #ccc; cursor: not-allowed; }
+    .status-msg { margin-top: 15px; text-align: center; font-weight: 600; }
+    .success { color: #107c41; }
+    .error { color: #d13438; }
+  </style>
+</head>
+<body>
 
-loadMenu();
+  <div class="order-card">
+    <h2>☕ Coffee Xpress Order</h2>
+
+    <form id="order-form">
+      <div class="form-group">
+        <label for="customerName">Your Name</label>
+        <input type="text" id="customerName" required placeholder="Enter your name">
+      </div>
+
+      <div class="form-group">
+        <label for="coffeeType">Coffee / Drink Type</label>
+        <select id="coffeeType" required>
+          <option value="">Loading menu...</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="size">Size</label>
+        <select id="size" required>
+          <option value="Small">Small</option>
+          <option value="Large">Large</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="milk">Milk Choice</label>
+        <select id="milk">
+          <option value="Full Cream">Full Cream</option>
+          <option value="Skim Milk">Skim Milk</option>
+          <option value="Oat Milk">Oat Milk (+0.70)</option>
+          <option value="Almond Milk">Almond Milk (+0.70)</option>
+          <option value="Soy Milk">Soy Milk (+0.70)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="syrup">Syrup / Extra Shot</label>
+        <select id="syrup">
+          <option value="None">None</option>
+          <option value="Vanilla">Vanilla (+0.70)</option>
+          <option value="Caramel">Caramel (+0.70)</option>
+          <option value="Hazelnut">Hazelnut (+0.70)</option>
+          <option value="Extra Shot">Extra Espresso Shot (+0.70)</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="notes">Special Instructions</label>
+        <textarea id="notes" rows="2" placeholder="e.g. Extra hot, half strength..."></textarea>
+      </div>
+
+      <button type="submit" id="submit-btn">Place Order</button>
+    </form>
+
+    <div id="status" class="status-msg"></div>
+  </div>
+
+  <script>
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPGbb6wVaFi8ZU3RRC1EPtJyaCypUJ_FM9xq_v4zBzIqI-J5jfhyeorWy4gPA1QuO6/exec";
+
+    async function loadMenu() {
+      const select = document.getElementById("coffeeType");
+      const status = document.getElementById("status");
+
+      try {
+        const res = await fetch(APPS_SCRIPT_URL).then(r => r.json());
+
+        if (res.status === "success" && res.items) {
+          select.innerHTML = '<option value="">-- Select Coffee --</option>';
+          res.items.forEach(item => {
+            const opt = document.createElement("option");
+            opt.value = item.name;
+            opt.textContent = item.price ? `${item.name} ($${item.price})` : item.name;
+            select.appendChild(opt);
+          });
+          if (status) status.textContent = "";
+        } else {
+          throw new Error(res.message || "Failed to parse options");
+        }
+      } catch (err) {
+        console.error(err);
+        if (status) status.textContent = "Failed to load menu options.";
+      }
+    }
+
+    document.getElementById("order-form").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const btn = document.getElementById("submit-btn");
+      const status = document.getElementById("status");
+
+      btn.disabled = true;
+      btn.textContent = "Sending Order...";
+      status.textContent = "";
+
+      const orderPayload = {
+        customerName: document.getElementById("customerName").value,
+        coffeeType: document.getElementById("coffeeType").value,
+        size: document.getElementById("size").value,
+        milk: document.getElementById("milk").value,
+        syrup: document.getElementById("syrup").value,
+        notes: document.getElementById("notes").value
+      };
+
+      try {
+        const response = await fetch(APPS_SCRIPT_URL, {
+          method: "POST",
+          redirect: "follow",
+          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          body: JSON.stringify(orderPayload)
+        });
+
+        const res = await response.json();
+
+        if (res.status === "success") {
+          status.className = "status-msg success";
+          status.textContent = "✅ Order placed successfully!";
+          document.getElementById("order-form").reset();
+        } else {
+          throw new Error(res.message);
+        }
+      } catch (err) {
+        console.error("Submit error:", err);
+        status.className = "status-msg error";
+        status.textContent = "❌ Failed to place order. Please try again.";
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "Place Order";
+      }
+    });
+
+    loadMenu();
+  </script>
+</body>
+</html>
