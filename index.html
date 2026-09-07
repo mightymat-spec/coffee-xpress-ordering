@@ -136,9 +136,9 @@
     params.append('notes', notes);
     params.append('timestamp', new Date().toISOString());
 <script>
-  // Replace this URL with your actual Google Apps Script Web App URL
-  var SCRIPT_URL = 'https://coffee.gemcoplayers.org/';
-  
+  // Paste your published Google Apps Script Web App deployment URL here
+  var SCRIPT_URL = 'https://script.google.com/macros/s/YOUR_DEPLOYMENT_ID/exec';
+
   var form = document.getElementById('orderForm');
   var statusMsg = document.getElementById('statusMsg');
   var submitBtn = document.getElementById('submitBtn');
@@ -165,7 +165,7 @@
 
     fetch(SCRIPT_URL, {
       method: 'POST',
-      mode: 'no-cors', // Bypasses CORS blocking for Google Apps Script
+      mode: 'no-cors',
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload)
     })
@@ -184,6 +184,8 @@
       statusMsg.textContent = 'Something went wrong. Please try again.';
       submitBtn.disabled = false;
     });
+  });
+</script>
   });
 </script>
 </script>
