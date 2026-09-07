@@ -36,22 +36,16 @@
       margin-top: 20px;
       font-size: 15px;
     }
-   <div class="form-group">
-  <label>Coffee type *</label>
-  <div id="coffeeGroup" class="options-grid">
-    <div style="grid-column: 1/-1; color: #666;">Loading menu...</div>
-  </div>
-</div>
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 1px solid #d8d8d8;
+      border-radius: 10px;
+      font-size: 15px;
+      outline: none;
     }
-    textarea {
-      resize: vertical;
-      min-height: 70px;
-    }
-    .grid2 {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 10px;
-    }
+    textarea { resize: vertical; min-height: 70px; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .option {
       display: flex;
       align-items: center;
@@ -63,15 +57,8 @@
       font-weight: 600;
       font-size: 15px;
     }
-    .option input {
-      accent-color: #4f6bff;
-      width: 16px;
-      height: 16px;
-    }
-    .option:has(input:checked) {
-      border-color: #4f6bff;
-      background: #f0f3ff;
-    }
+    .option input { accent-color: #4f6bff; width: 16px; height: 16px; }
+    .option:has(input:checked) { border-color: #4f6bff; background: #f0f3ff; }
     button#submitBtn {
       width: 100%;
       margin-top: 28px;
@@ -84,38 +71,25 @@
       font-weight: 700;
       cursor: pointer;
     }
-    button#submitBtn:disabled {
-      opacity: 0.6;
-      cursor: default;
-    }
-    #statusMsg {
-      margin-top: 16px;
-      text-align: center;
-      font-weight: 600;
-    }
+    button#submitBtn:disabled { opacity: 0.6; cursor: default; }
+    #statusMsg { margin-top: 16px; text-align: center; font-weight: 600; }
     #statusMsg.success { color: #1a8754; }
     #statusMsg.error { color: #c0392b; }
   </style>
 </head>
 <body>
-
   <div class="card">
     <h1>☕ Coffee Xpress</h1>
     <form id="orderForm">
-      <label class="field-label" for="name">Your name</label>
+      <label class="field-label" for="name">Your name *</label>
       <input type="text" id="name" name="name" placeholder="Enter your name" required>
 
-      <label class="field-label">Coffee type</label>
+      <label class="field-label">Coffee type *</label>
       <div class="grid2" id="coffeeGroup">
-        <label class="option"><input type="radio" name="coffee" value="espresso" checked> Espresso</label>
-        <label class="option"><input type="radio" name="coffee" value="cappuccino"> Cappuccino</label>
-        <label class="option"><input type="radio" name="coffee" value="latte"> Latte</label>
-        <label class="option"><input type="radio" name="coffee" value="flat white"> Flat white</label>
-        <label class="option"><input type="radio" name="coffee" value="americano"> Americano</label>
-        <label class="option"><input type="radio" name="coffee" value="macchiato"> Macchiato</label>
+        <div style="grid-column: 1/-1; color: #666;">Loading menu...</div>
       </div>
 
-      <label class="field-label">Size</label>
+      <label class="field-label">Size *</label>
       <div class="grid2" id="sizeGroup">
         <label class="option"><input type="radio" name="size" value="8oz" checked> 8oz small</label>
         <label class="option"><input type="radio" name="size" value="12oz"> 12oz large</label>
@@ -130,88 +104,87 @@
   </div>
 
   <script>
-    <script>
-  var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwOTHux3qeaAY7qsluT_GFElXZ1pEPfR5xKXqonGOABpgMg0ajzNttFbsZeENgjToF9/exec';
+    var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwOTHux3qeaAY7qsluT_GFElXZ1pEPfR5xKXqonGOABpgMg0ajzNttFbsZeENgjToF9/exec';
 
-  window.addEventListener('DOMContentLoaded', function() {
-    var coffeeGroup = document.getElementById('coffeeGroup');
+    window.addEventListener('DOMContentLoaded', function() {
+      var coffeeGroup = document.getElementById('coffeeGroup');
 
-    fetch(SCRIPT_URL)
-      .then(function(res) { return res.json(); })
-      .then(function(data) {
-        if (!data.items || data.items.length === 0) {
-          coffeeGroup.innerHTML = '<div style="grid-column: 1/-1; color: #c0392b;">No menu items found in Loyverse.</div>';
-          return;
-        }
-
-        coffeeGroup.innerHTML = '';
-        data.items.forEach(function(item, index) {
-          var price = '';
-          if (item.variants && item.variants[0] && item.variants[0].default_price) {
-            price = ' - $' + parseFloat(item.variants[0].default_price).toFixed(2);
+      fetch(SCRIPT_URL)
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+          if (!data.items || data.items.length === 0) {
+            coffeeGroup.innerHTML = '<div style="grid-column: 1/-1; color: #c0392b;">No menu items found in Loyverse.</div>';
+            return;
           }
-          
-          var checked = index === 0 ? 'checked' : '';
-          var label = document.createElement('label');
-          label.className = 'option';
-          label.innerHTML = '<input type="radio" name="coffee" value="' + item.item_name + '" ' + checked + '> ' + item.item_name + price;
-          coffeeGroup.appendChild(label);
+
+          coffeeGroup.innerHTML = '';
+          data.items.forEach(function(item, index) {
+            var price = '';
+            if (item.variants && item.variants[0] && item.variants[0].default_price) {
+              price = ' - $' + parseFloat(item.variants[0].default_price).toFixed(2);
+            }
+            
+            var checked = index === 0 ? 'checked' : '';
+            var label = document.createElement('label');
+            label.className = 'option';
+            label.innerHTML = '<input type="radio" name="coffee" value="' + item.item_name + '" ' + checked + '> ' + item.item_name + price;
+            coffeeGroup.appendChild(label);
+          });
+        })
+        .catch(function(err) {
+          console.error('Loyverse fetch error:', err);
+          coffeeGroup.innerHTML = '<div style="grid-column: 1/-1; color: #c0392b;">Failed to load Loyverse menu.</div>';
         });
+    });
+
+    var form = document.getElementById('orderForm');
+    var statusMsg = document.getElementById('statusMsg');
+    var submitBtn = document.getElementById('submitBtn');
+
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+
+      var name = document.getElementById('name').value.trim();
+      var coffeeSelected = form.querySelector('input[name="coffee"]:checked');
+      var coffee = coffeeSelected ? coffeeSelected.value : '';
+      var sizeSelected = form.querySelector('input[name="size"]:checked');
+      var size = sizeSelected ? sizeSelected.value : '';
+      var notes = document.getElementById('notes').value.trim();
+
+      var payload = {
+        customerName: name,
+        coffee: coffee,
+        size: size,
+        notes: notes,
+        timestamp: new Date().toISOString()
+      };
+
+      submitBtn.disabled = true;
+      statusMsg.className = '';
+      statusMsg.textContent = 'Placing your order...';
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'text/plain' },
+        body: JSON.stringify(payload)
+      })
+      .then(function() {
+        statusMsg.className = 'success';
+        statusMsg.textContent = 'Order placed! See you soon, ' + name + '.';
+        setTimeout(function() {
+          form.reset();
+          statusMsg.textContent = '';
+          statusMsg.className = '';
+          submitBtn.disabled = false;
+        }, 2000);
       })
       .catch(function(err) {
-        console.error('Loyverse fetch error:', err);
-        coffeeGroup.innerHTML = '<div style="grid-column: 1/-1; color: #c0392b;">Failed to load Loyverse menu.</div>';
-      });
-  });
-
-  var form = document.getElementById('orderForm');
-  var statusMsg = document.getElementById('statusMsg');
-  var submitBtn = document.getElementById('submitBtn');
-
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    var name = document.getElementById('name').value.trim();
-    var coffeeSelected = form.querySelector('input[name="coffee"]:checked');
-    var coffee = coffeeSelected ? coffeeSelected.value : '';
-    var sizeSelected = form.querySelector('input[name="size"]:checked');
-    var size = sizeSelected ? sizeSelected.value : '';
-    var notes = document.getElementById('notes').value.trim();
-
-    var payload = {
-      customerName: name,
-      coffee: coffee,
-      size: size,
-      notes: notes,
-      timestamp: new Date().toISOString()
-    };
-
-    submitBtn.disabled = true;
-    statusMsg.className = '';
-    statusMsg.textContent = 'Placing your order...';
-
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      mode: 'no-cors',
-      headers: { 'Content-Type': 'text/plain' },
-      body: JSON.stringify(payload)
-    })
-    .then(function() {
-      statusMsg.className = 'success';
-      statusMsg.textContent = 'Order placed! See you soon, ' + name + '.';
-      setTimeout(function() {
-        form.reset();
-        statusMsg.textContent = '';
-        statusMsg.className = '';
+        statusMsg.className = 'error';
+        statusMsg.textContent = 'Something went wrong. Please try again.';
         submitBtn.disabled = false;
-      }, 2000);
-    })
-    .catch(function(err) {
-      statusMsg.className = 'error';
-      statusMsg.textContent = 'Something went wrong. Please try again.';
-      submitBtn.disabled = false;
+      });
     });
-  });
-</script>
+  </script>
 </body>
 </html>
