@@ -36,13 +36,12 @@
       margin-top: 20px;
       font-size: 15px;
     }
-    input[type="text"], textarea {
-      width: 100%;
-      padding: 12px 14px;
-      border: 1px solid #d8d8d8;
-      border-radius: 10px;
-      font-size: 15px;
-      font-family: inherit;
+   <div class="form-group">
+  <label>Coffee type *</label>
+  <div id="coffeeGroup" class="options-grid">
+    <div style="grid-column: 1/-1; color: #666;">Loading menu...</div>
+  </div>
+</div>
     }
     textarea {
       resize: vertical;
@@ -131,55 +130,88 @@
   </div>
 
   <script>
-    // Paste your Google Apps Script Web App URL below
-    var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwOTHux3qeaAY7qsluT_GFElXZ1pEPfR5xKXqonGOABpgMg0ajzNttFbsZeENgjToF9/exec';
-    var form = document.getElementById('orderForm');
-    var statusMsg = document.getElementById('statusMsg');
-    var submitBtn = document.getElementById('submitBtn');
+    <script>
+  var SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbwOTHux3qeaAY7qsluT_GFElXZ1pEPfR5xKXqonGOABpgMg0ajzNttFbsZeENgjToF9/exec';
 
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
+  window.addEventListener('DOMContentLoaded', function() {
+    var coffeeGroup = document.getElementById('coffeeGroup');
 
-      var name = document.getElementById('name').value.trim();
-      var coffee = form.querySelector('input[name="coffee"]:checked').value;
-      var size = form.querySelector('input[name="size"]:checked').value;
-      var notes = document.getElementById('notes').value.trim();
+    fetch(SCRIPT_URL)
+      .then(function(res) { return res.json(); })
+      .then(function(data) {
+        if (!data.items || data.items.length === 0) {
+          coffeeGroup.innerHTML = '<div style="grid-column: 1/-1; color: #c0392b;">No menu items found in Loyverse.</div>';
+          return;
+        }
 
-      var payload = {
-        customerName: name,
-        coffee: coffee,
-        size: size,
-        notes: notes,
-        timestamp: new Date().toISOString()
-      };
-
-      submitBtn.disabled = true;
-      statusMsg.className = '';
-      statusMsg.textContent = 'Placing your order...';
-
-      fetch(SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'text/plain' },
-        body: JSON.stringify(payload)
-      })
-      .then(function() {
-        statusMsg.className = 'success';
-        statusMsg.textContent = 'Order placed! See you soon, ' + name + '.';
-        setTimeout(function() {
-          form.reset();
-          statusMsg.textContent = '';
-          statusMsg.className = '';
-          submitBtn.disabled = false;
-        }, 2000);
+        coffeeGroup.innerHTML = '';
+        data.items.forEach(function(item, index) {
+          var price = '';
+          if (item.variants && item.variants[0] && item.variants[0].default_price) {
+            price = ' - $' + parseFloat(item.variants[0].default_price).toFixed(2);
+          }
+          
+          var checked = index === 0 ? 'checked' : '';
+          var label = document.createElement('label');
+          label.className = 'option';
+          label.innerHTML = '<input type="radio" name="coffee" value="' + item.item_name + '" ' + checked + '> ' + item.item_name + price;
+          coffeeGroup.appendChild(label);
+        });
       })
       .catch(function(err) {
-        statusMsg.className = 'error';
-        statusMsg.textContent = 'Something went wrong. Please try again.';
-        submitBtn.disabled = false;
+        console.error('Loyverse fetch error:', err);
+        coffeeGroup.innerHTML = '<div style="grid-column: 1/-1; color: #c0392b;">Failed to load Loyverse menu.</div>';
       });
-    });
-  </script>
+  });
 
+  var form = document.getElementById('orderForm');
+  var statusMsg = document.getElementById('statusMsg');
+  var submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    var name = document.getElementById('name').value.trim();
+    var coffeeSelected = form.querySelector('input[name="coffee"]:checked');
+    var coffee = coffeeSelected ? coffeeSelected.value : '';
+    var sizeSelected = form.querySelector('input[name="size"]:checked');
+    var size = sizeSelected ? sizeSelected.value : '';
+    var notes = document.getElementById('notes').value.trim();
+
+    var payload = {
+      customerName: name,
+      coffee: coffee,
+      size: size,
+      notes: notes,
+      timestamp: new Date().toISOString()
+    };
+
+    submitBtn.disabled = true;
+    statusMsg.className = '';
+    statusMsg.textContent = 'Placing your order...';
+
+    fetch(SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    })
+    .then(function() {
+      statusMsg.className = 'success';
+      statusMsg.textContent = 'Order placed! See you soon, ' + name + '.';
+      setTimeout(function() {
+        form.reset();
+        statusMsg.textContent = '';
+        statusMsg.className = '';
+        submitBtn.disabled = false;
+      }, 2000);
+    })
+    .catch(function(err) {
+      statusMsg.className = 'error';
+      statusMsg.textContent = 'Something went wrong. Please try again.';
+      submitBtn.disabled = false;
+    });
+  });
+</script>
 </body>
 </html>
