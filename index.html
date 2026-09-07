@@ -135,34 +135,57 @@
     params.append('size', size);
     params.append('notes', notes);
     params.append('timestamp', new Date().toISOString());
+<script>
+  // Replace this URL with your actual Google Apps Script Web App URL
+  var SCRIPT_URL = 'https://coffee.gemcoplayers.org/';
+  
+  var form = document.getElementById('orderForm');
+  var statusMsg = document.getElementById('statusMsg');
+  var submitBtn = document.getElementById('submitBtn');
+
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    var name = document.getElementById('name').value.trim();
+    var coffee = form.querySelector('input[name="coffee"]:checked').value;
+    var size = form.querySelector('input[name="size"]:checked').value;
+    var notes = document.getElementById('notes').value.trim();
+
+    var payload = {
+      customerName: name,
+      coffee: coffee,
+      size: size,
+      notes: notes,
+      timestamp: new Date().toISOString()
+    };
 
     submitBtn.disabled = true;
     statusMsg.className = '';
     statusMsg.textContent = 'Placing your order...';
 
-    fetch(WEBHOOK_URL, {
+    fetch(SCRIPT_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: params.toString()
-    }).then(function(response) {
-      if (response.ok) {
-        statusMsg.className = 'success';
-        statusMsg.textContent = 'Order placed! See you soon, ' + name + '.';
-        setTimeout(function() {
-          form.reset();
-          statusMsg.textContent = '';
-          statusMsg.className = '';
-          submitBtn.disabled = false;
-        }, 2000);
-      } else {
-        throw new Error('Request failed with status ' + response.status);
-      }
-    }).catch(function(err) {
+      mode: 'no-cors', // Bypasses CORS blocking for Google Apps Script
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify(payload)
+    })
+    .then(function() {
+      statusMsg.className = 'success';
+      statusMsg.textContent = 'Order placed! See you soon, ' + name + '.';
+      setTimeout(function() {
+        form.reset();
+        statusMsg.textContent = '';
+        statusMsg.className = '';
+        submitBtn.disabled = false;
+      }, 2000);
+    })
+    .catch(function(err) {
       statusMsg.className = 'error';
       statusMsg.textContent = 'Something went wrong. Please try again.';
       submitBtn.disabled = false;
     });
   });
+</script>
 </script>
 </body>
 </html>
