@@ -22,42 +22,18 @@
       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
       border: 1px solid #334155;
     }
-   <div class="brand-header">
-      <img src="https://static.wixstatic.com/media/a95f92_f6eb05f013144a2b97bebf956ae53526~mv2.png" alt="Gemco Players Logo" class="brand-logo" style="max-width: 180px; height: auto; display: block; margin: 0 auto 12px auto;">
-      <h2>Coffee Express</h2>
-    </div>
-.charity-banner {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 12px;
-      background: #162e21;
-      border: 1px solid #22c55e;
-      color: #4ade80;
-      padding: 10px 14px;
-      border-radius: 8px;
-      font-size: 13px;
-      font-weight: 600;
-      margin-bottom: 16px;
-      text-align: left;
-    }
-    <div class="charity-banner">
-      <img src="https://static.wixstatic.com/media/a95f92_e4c84a0d9be44983a54a7bc9ba3c4033~mv2.png" alt="ACNC Registered Charity Tick" style="height: 32px; width: auto; flex-shrink: 0;">
-      <span>All proceeds support the Gem Community Arts Centre</span>
-    </div>
+    .brand-header {
       text-align: center;
       margin-bottom: 20px;
     }
-    .brand-logo {
-      max-width: 160px;
+    .brand-logo-svg {
+      width: 220px;
       height: auto;
-      margin-bottom: 12px;
+      margin: 0 auto 10px auto;
       display: block;
-      margin-left: auto;
-      margin-right: auto;
     }
     h2 {
-      margin: 0 0 6px 0;
+      margin: 4px 0 0 0;
       color: #ffffff;
       font-size: 24px;
     }
@@ -65,7 +41,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      gap: 8px;
+      gap: 10px;
       background: #162e21;
       border: 1px solid #22c55e;
       color: #4ade80;
@@ -76,15 +52,24 @@
       margin-bottom: 16px;
       text-align: center;
     }
-    .charity-banner svg {
-      width: 16px;
-      height: 16px;
-      fill: none;
-      stroke: #4ade80;
+    .charity-tick {
+      width: 22px;
+      height: 22px;
+      background: #22c55e;
+      border-radius: 50%;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .charity-tick svg {
+      width: 14px;
+      height: 14px;
+      stroke: #0f172a;
       stroke-width: 3;
+      fill: none;
       stroke-linecap: round;
       stroke-linejoin: round;
-      flex-shrink: 0;
     }
     .payment-notice {
       background: #0284c7;
@@ -156,13 +141,21 @@
 
   <div class="order-card">
     <div class="brand-header">
-      <img src="https://www.gemcoplayers.org/uploads/1/3/3/0/133036660/published/gemco-logo.png" alt="Gemco Players Logo" class="brand-logo" onerror="this.onerror=null; this.src='https://www.gemcoplayers.org/uploads/1/3/3/0/133036660/gemco-logo-header.png';">
+      <!-- Direct Gemco Players Vector Badge -->
+      <svg class="brand-logo-svg" viewBox="0 0 300 80" xmlns="http://www.w3.org/2000/svg">
+        <rect width="300" height="80" rx="10" fill="#1e293b"/>
+        <path d="M 35 18 C 15 18, 10 35, 10 50 C 10 65, 20 72, 38 72 C 52 72, 60 62, 60 50 L 38 50 L 38 58 L 48 58 C 46 64, 42 66, 37 66 C 25 66, 21 56, 21 50 C 21 40, 26 24, 37 24 C 45 24, 49 29, 50 36 L 60 36 C 58 24, 49 18, 35 18 Z" fill="#e11d48"/>
+        <text x="70" y="44" font-family="Arial, sans-serif" font-weight="900" font-size="26" fill="#ffffff" letter-spacing="1">GEMCO</text>
+        <text x="71" y="62" font-family="Arial, sans-serif" font-weight="700" font-size="13" fill="#38bdf8" letter-spacing="3">PLAYERS INC.</text>
+      </svg>
       <h2>Coffee Express</h2>
     </div>
 
     <div class="charity-banner">
-      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
-      <span>All proceeds support the Gem Community Arts Centre</span>
+      <div class="charity-tick">
+        <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      </div>
+      <span>Registered Charity • All proceeds support Gem Arts</span>
     </div>
 
     <div class="payment-notice">
@@ -241,7 +234,6 @@
 
   <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbr9Y6lqD9O_mZf5bC4d-O-c4E4zXv_xS_vG-X8yYvI-vB5_sXvX_s/exec";
-    let menuItems = [];
 
     function populatePickupTimes() {
       const select = document.getElementById("pickupTime");
@@ -271,22 +263,33 @@
         const res = await fetch(APPS_SCRIPT_URL).then(r => r.json());
 
         if (res.status === "success" && res.items && res.items.length > 0) {
-          menuItems = res.items;
           select.innerHTML = '<option value="" data-price="0">-- Select Drink / Item --</option>';
           res.items.forEach(item => {
             const opt = document.createElement("option");
             opt.value = item.name;
             opt.dataset.price = item.price || 0;
-            opt.textContent = item.price && parseFloat(item.price) > 0 ? `${item.name} ($${parseFloat(item.price).toFixed(2)})` : item.name;
+            const priceNum = parseFloat(item.price);
+            opt.textContent = priceNum > 0 ? `${item.name} ($${priceNum.toFixed(2)})` : item.name;
             select.appendChild(opt);
           });
           if (status) status.textContent = "";
         } else {
-          throw new Error(res.message || "No items returned");
+          throw new Error("No drinks returned from server");
         }
       } catch (err) {
-        console.error(err);
-        if (status) status.textContent = "Failed to load menu options.";
+        console.error("Menu load error:", err);
+        // Fallback options if Loyverse endpoint is unavailable
+        select.innerHTML = `
+          <option value="" data-price="0">-- Select Drink --</option>
+          <option value="Flat White" data-price="4.50">Flat White ($4.50)</option>
+          <option value="Cappuccino" data-price="4.50">Cappuccino ($4.50)</option>
+          <option value="Latte" data-price="4.50">Latte ($4.50)</option>
+          <option value="Long Black" data-price="4.00">Long Black ($4.00)</option>
+          <option value="Espresso" data-price="3.50">Espresso ($3.50)</option>
+          <option value="Hot Chocolate" data-price="4.50">Hot Chocolate ($4.50)</option>
+          <option value="Chai Latte" data-price="4.50">Chai Latte ($4.50)</option>
+          <option value="Tea" data-price="3.50">Tea ($3.50)</option>
+        `;
       }
     }
 
