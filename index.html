@@ -135,12 +135,12 @@
 
   <div class="order-card">
     <div class="brand-header">
-      <img src="GEM_placeHolder_logo_V22_2.jpg" alt="Gemco Players Community Theatre & The Gem Community Arts Centre" class="gemco-joint-logo">
+      <img src="GEM_placeHolder_logo_V22.jpg" alt="Gemco Players Community Theatre & The Gem Community Arts Centre" class="gemco-joint-logo">
       <h2>Coffee Express</h2>
     </div>
 
     <div class="charity-banner">
-      <img src="ACNC-Registered-Charity-Logo_RGB_2.png" alt="ACNC Registered Charity Tick" class="acnc-tick-img">
+      <img src="ACNC-Registered-Charity-Logo_RGB.png" alt="ACNC Registered Charity Tick" class="acnc-tick-img">
       <span>All proceeds support the Gem Community Arts Centre</span>
     </div>
 
@@ -241,36 +241,37 @@
       }
     }
 
-    async function loadMenu() {
+    function handleMenuResponse(res) {
       const select = document.getElementById("coffeeType");
       const status = document.getElementById("status");
 
-      try {
-        const response = await fetch(APPS_SCRIPT_URL);
-        const res = await response.json();
-
-        if (res.status === "success" && res.items && res.items.length > 0) {
-          select.innerHTML = '<option value="" data-price="0">-- Select Drink / Item --</option>';
-          res.items.forEach(item => {
-            const opt = document.createElement("option");
-            opt.value = item.name;
-            const priceNum = parseFloat(item.price) || 0;
-            opt.dataset.price = priceNum;
-            opt.textContent = priceNum > 0 ? `${item.name} ($${priceNum.toFixed(2)})` : item.name;
-            select.appendChild(opt);
-          });
-          if (status) status.textContent = "";
-        } else {
-          throw new Error("No menu items returned");
-        }
-      } catch (err) {
-        console.error("Menu load error:", err);
+      if (res && res.status === "success" && res.items && res.items.length > 0) {
+        select.innerHTML = '<option value="" data-price="0">-- Select Drink / Item --</option>';
+        res.items.forEach(item => {
+          const opt = document.createElement("option");
+          opt.value = item.name;
+          const priceNum = parseFloat(item.price) || 0;
+          opt.dataset.price = priceNum;
+          opt.textContent = priceNum > 0 ? `${item.name} ($${priceNum.toFixed(2)})` : item.name;
+          select.appendChild(opt);
+        });
+        if (status) status.textContent = "";
+      } else {
         select.innerHTML = '<option value="" data-price="0">-- Unable to load menu --</option>';
+      }
+    }
+
+    function loadMenuJSONP() {
+      const script = document.createElement("script");
+      script.src = `${APPS_SCRIPT_URL}?callback=handleMenuResponse`;
+      script.onerror = function() {
+        const status = document.getElementById("status");
         if (status) {
           status.className = "status-msg error";
-          status.textContent = "⚠️ Unable to load menu prices. Check Apps Script deployment settings.";
+          status.textContent = "⚠️ Unable to load menu. Re-deploy Apps Script as Web App.";
         }
-      }
+      };
+      document.body.appendChild(script);
     }
 
     function updateTotal() {
@@ -317,7 +318,7 @@
         await fetch(APPS_SCRIPT_URL, {
           method: "POST",
           mode: "no-cors",
-          headers: { "Content-Type": "application/json" },
+          headers: { "Content-Type": "text/plain" },
           body: JSON.stringify(orderPayload)
         });
 
@@ -336,7 +337,7 @@
     });
 
     populatePickupTimes();
-    loadMenu();
+    loadMenuJSONP();
   </script>
 </body>
 </html>
