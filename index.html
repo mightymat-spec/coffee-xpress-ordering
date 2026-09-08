@@ -9,12 +9,12 @@
     .card { background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-bottom: 20px; border: 1px solid #334155; }
     .form-group { margin-bottom: 15px; }
     label { display: block; font-weight: 600; margin-bottom: 6px; color: #cbd5e1; }
-    select, input[type="date"], input[type="text"], button { width: 100%; padding: 12px; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #f8fafc; font-size: 14px; box-sizing: border-box; }
+    select, input[type="date"], input[type="text"], input[type="number"], textarea, button { width: 100%; padding: 12px; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #f8fafc; font-size: 14px; box-sizing: border-box; }
+    textarea { resize: vertical; min-height: 70px; }
     button { background: #2563eb; color: #ffffff; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; border-radius: 8px; }
     button:hover { background: #1d4ed8; }
     button:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
     
-    /* Modifier Formatting Fixes */
     .modifier-group { margin: 12px 0; padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; }
     .modifier-group strong { display: block; margin-bottom: 8px; color: #38bdf8; font-size: 14px; }
     .modifier-options-list { display: flex; flex-direction: column; gap: 8px; }
@@ -39,25 +39,11 @@
     <h2>☕ Coffee Express Order</h2>
     
     <form id="order-form" onsubmit="handleOrderSubmit(event)">
-      <!-- Customer Name -->
       <div class="form-group">
         <label for="customerName">Your Name</label>
         <input type="text" id="customerName" name="customerName" placeholder="Enter your name" required>
       </div>
 
-      <!-- Pickup Date (Tuesdays & Thursdays Only) -->
-      <div class="form-group">
-        <label for="pickupDate">Pickup Date (Tuesdays & Thursdays Only)</label>
-        <input type="date" id="pickupDate" name="pickupDate" required>
-      </div>
-
-      <!-- Pickup Time -->
-      <div class="form-group">
-        <label for="pickupTime">Pickup Time (8:00 AM – 11:00 AM)</label>
-        <select id="pickupTime" name="pickupTime" required></select>
-      </div>
-
-      <!-- Category Selection -->
       <div class="form-group">
         <label for="categorySelect">Category</label>
         <select id="categorySelect" onchange="onCategoryChange()" required>
@@ -65,7 +51,6 @@
         </select>
       </div>
 
-      <!-- Item Selection -->
       <div class="form-group">
         <label for="itemSelect">Drink Item</label>
         <select id="itemSelect" onchange="onItemChange()" required disabled>
@@ -73,7 +58,6 @@
         </select>
       </div>
 
-      <!-- Size / Variant Selection -->
       <div class="form-group">
         <label for="variantSelect">Variant / Size</label>
         <select id="variantSelect" required disabled>
@@ -81,24 +65,44 @@
         </select>
       </div>
 
-      <!-- Modifiers Container -->
       <div class="form-group">
         <label>Customizations / Add-ons</label>
         <div id="modifiersContainer"><i>Select an item to view add-ons</i></div>
       </div>
 
+      <div class="form-group">
+        <label for="itemQuantity">Quantity</label>
+        <input type="number" id="itemQuantity" min="1" max="20" value="1" required>
+      </div>
+
       <button type="button" id="add-to-cart-btn" onclick="addToCart()" disabled>Add Item to Order</button>
+
+      <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
+
+      <div class="form-group">
+        <label for="pickupDate">Pickup Date (Tuesdays & Thursdays Only)</label>
+        <input type="date" id="pickupDate" name="pickupDate" required>
+      </div>
+
+      <div class="form-group">
+        <label for="pickupTime">Pickup Time (8:00 AM – 11:00 AM)</label>
+        <select id="pickupTime" name="pickupTime" required></select>
+      </div>
+
+      <div class="form-group">
+        <label for="specialInstructions">Special Instructions</label>
+        <textarea id="specialInstructions" placeholder="e.g. Extra hot, extra shot..."></textarea>
+      </div>
     </form>
   </div>
 
-  <!-- Cart & Summary -->
   <div class="card">
     <h3 style="margin-top:0;">Order Summary</h3>
-    <div id="cartList"><i>Your order is empty.</i></div>
+    <div id="cartList"><i>No items added yet.</i></div>
     <div style="margin-top: 15px; font-weight: bold; font-size: 16px;">
       Grand Total: $<span id="cartTotal">0.00</span>
     </div>
-    <button type="submit" form="order-form" id="submit-btn" style="margin-top: 15px;">Place Order (Payment on Pickup)</button>
+    <button type="submit" form="order-form" id="submit-btn" style="margin-top: 15px;">Place Order</button>
 
     <div id="status" class="status-msg"></div>
     <div id="calendarArea" style="display: none;">
@@ -122,17 +126,14 @@
     fetchMenuData();
   });
 
-  // --- Date Picker Logic (Tuesdays & Thursdays Only) ---
   function initializeDatePicker() {
     const dateInput = document.getElementById("pickupDate");
     let target = new Date();
 
-    // If today is Tue (2) or Thu (4) but past 11 AM, advance to tomorrow
     if ((target.getDay() === 2 || target.getDay() === 4) && target.getHours() >= 11) {
       target.setDate(target.getDate() + 1);
     }
 
-    // Advance until target is Tuesday (2) or Thursday (4)
     while (target.getDay() !== 2 && target.getDay() !== 4) {
       target.setDate(target.getDate() + 1);
     }
@@ -158,47 +159,54 @@
     const day = chosen.getDay();
 
     if (day !== 2 && day !== 4) {
-      alert("⚠️ Pickup is available on Tuesdays and Thursdays only. Resetting to the next open day.");
+      alert("⚠️ Pickup is available on Tuesdays and Thursdays only.");
       initializeDatePicker();
     }
   }
 
   function populatePickupTimes() {
     const timeSelect = document.getElementById("pickupTime");
-    timeSelect.innerHTML = "";
+    timeSelect.innerHTML = '<option value="">-- Select Pickup Time --</option>';
     
-    let times = [];
     for (let hour = 8; hour <= 11; hour++) {
       let maxMin = (hour === 11) ? 0 : 45;
       for (let min = 0; min <= maxMin; min += 15) {
         let period = hour >= 12 ? "PM" : "AM";
         let displayHour = hour > 12 ? hour - 12 : hour;
         let displayMin = min < 10 ? "0" + min : min;
-        times.push(`${displayHour}:${displayMin} ${period}`);
+        let timeVal = `${displayHour}:${displayMin} ${period}`;
+        
+        const opt = document.createElement("option");
+        opt.value = timeVal;
+        opt.textContent = timeVal;
+        timeSelect.appendChild(opt);
       }
     }
-    
-    times.forEach(t => {
-      const opt = document.createElement("option");
-      opt.value = t;
-      opt.textContent = t;
-      timeSelect.appendChild(opt);
-    });
   }
 
   function fetchMenuData() {
     const script = document.createElement('script');
+    script.id = 'jsonp-menu-script';
     script.src = `${APPS_SCRIPT_URL}?callback=handleMenuResponse`;
-    document.body.appendChild(script);
-  }
+    
+    const timeout = setTimeout(() => {
+      if (!menuData.categories || menuData.categories.length === 0) {
+        showStatus("Menu connection timed out. Please refresh or verify Google Apps Script deployment access.", false);
+        document.getElementById("categorySelect").innerHTML = '<option value="">Failed to load menu</option>';
+      }
+    }, 10000);
 
-  function handleMenuResponse(data) {
-    if (data.status === "error") {
-      showStatus("Error loading menu: " + data.message, false);
-      return;
-    }
-    menuData = data;
-    populateCategories();
+    window.handleMenuResponse = function(data) {
+      clearTimeout(timeout);
+      if (data.status === "error") {
+        showStatus("Error loading menu: " + data.message, false);
+        return;
+      }
+      menuData = data;
+      populateCategories();
+    };
+
+    document.body.appendChild(script);
   }
 
   function populateCategories() {
@@ -261,7 +269,6 @@
     const selectedItem = menuData.items.find(item => item.id === itemId);
     if (!selectedItem) return;
 
-    // Populate Variants / Sizes
     variantSelect.innerHTML = "";
     const variants = selectedItem.variants || [];
 
@@ -275,7 +282,6 @@
         
       opt.dataset.price = price;
       
-      // Determine Variant Label
       let labelName = v.option1_value;
       if (!labelName) {
         if (price === 5 || (v.sku && v.sku.toLowerCase().includes("small"))) {
@@ -294,10 +300,7 @@
     });
 
     variantSelect.disabled = variants.length === 0;
-
-    // Populate Modifiers
     populateModifiers(selectedItem);
-
     addToCartBtn.disabled = false;
   }
 
@@ -366,6 +369,7 @@
   function addToCart() {
     const itemSelect = document.getElementById("itemSelect");
     const variantSelect = document.getElementById("variantSelect");
+    const qtyInput = document.getElementById("itemQuantity");
     
     if (!itemSelect.value) return;
 
@@ -375,6 +379,7 @@
 
     const variantName = selectedVariantOpt ? selectedVariantOpt.dataset.label : "Standard";
     const variantPrice = selectedVariantOpt ? parseFloat(selectedVariantOpt.dataset.price || 0) : 0;
+    const qty = parseInt(qtyInput.value, 10) || 1;
 
     let selectedMods = [];
     let modPriceTotal = 0;
@@ -385,10 +390,14 @@
       modPriceTotal += modPrice;
     });
 
+    const itemUnitPrice = variantPrice + modPriceTotal;
+
     const cartItem = {
       name: itemObj.name,
       variant: variantName,
-      price: variantPrice + modPriceTotal,
+      quantity: qty,
+      unitPrice: itemUnitPrice,
+      price: itemUnitPrice * qty,
       modifiers: selectedMods
     };
 
@@ -396,6 +405,7 @@
     renderCart();
 
     document.querySelectorAll(".modifier-checkbox").forEach(cb => cb.checked = false);
+    qtyInput.value = 1;
   }
 
   function renderCart() {
@@ -403,7 +413,7 @@
     const cartTotal = document.getElementById("cartTotal");
 
     if (cart.length === 0) {
-      cartList.innerHTML = "<i>Your order is empty.</i>";
+      cartList.innerHTML = "<i>No items added yet.</i>";
       cartTotal.textContent = "0.00";
       return;
     }
@@ -420,7 +430,7 @@
       
       div.innerHTML = `
         <div>
-          <strong>${item.name}</strong> (${item.variant})${modText}
+          <strong>${item.quantity}x ${item.name}</strong> (${item.variant})${modText}
         </div>
         <div>
           $${item.price.toFixed(2)} 
@@ -448,11 +458,18 @@
     const custName = document.getElementById("customerName").value;
     const pDate = document.getElementById("pickupDate").value;
     const pTime = document.getElementById("pickupTime").value;
+    const instructions = document.getElementById("specialInstructions").value;
+
+    if (!pTime) {
+      showStatus("Please select a valid pickup time.", false);
+      return;
+    }
 
     lastOrderDetails = {
       customerName: custName,
       date: pDate,
       time: pTime,
+      instructions: instructions,
       items: [...cart],
       total: document.getElementById("cartTotal").textContent
     };
@@ -464,6 +481,7 @@
     renderCart();
     document.getElementById("order-form").reset();
     initializeDatePicker();
+    populatePickupTimes();
     resetVariantAndModifiers();
   }
 
@@ -473,7 +491,6 @@
     status.textContent = msg;
   }
 
-  // --- Calendar & Reminder Integration ---
   function getOrderStartEndDates() {
     if (!lastOrderDetails) return null;
     const [year, month, day] = lastOrderDetails.date.split("-").map(Number);
@@ -484,7 +501,7 @@
     if (period === "AM" && hours === 12) hours = 0;
 
     const startDate = new Date(year, month - 1, day, hours, minutes);
-    const endDate = new Date(startDate.getTime() + 15 * 60000); // 15 mins duration
+    const endDate = new Date(startDate.getTime() + 15 * 60000);
 
     return { startDate, endDate };
   }
@@ -494,11 +511,10 @@
     if (!dates) return;
 
     const formatISO = d => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
-    
-    const summaryList = lastOrderDetails.items.map(i => `${i.name} (${i.variant})`).join(", ");
+    const summaryList = lastOrderDetails.items.map(i => `${i.quantity}x ${i.name} (${i.variant})`).join(", ");
     const title = encodeURIComponent(`☕ Coffee Express Pickup (${lastOrderDetails.customerName})`);
-    const details = encodeURIComponent(`Order Details:\n${summaryList}\n\nTotal Due: $${lastOrderDetails.total}`);
-    const location = encodeURIComponent("Gem Community Arts Centre");
+    const details = encodeURIComponent(`Order Details:\n${summaryList}\n\nInstructions: ${lastOrderDetails.instructions || 'None'}\n\nTotal Due: $${lastOrderDetails.total}`);
+    const location = encodeURIComponent("Coffee Express Pickup");
 
     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatISO(dates.startDate)}/${formatISO(dates.endDate)}&details=${details}&location=${location}`;
     window.open(url, '_blank');
@@ -509,7 +525,7 @@
     if (!dates) return;
 
     const formatISO = d => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
-    const summaryList = lastOrderDetails.items.map(i => `${i.name} (${i.variant})`).join("\\n");
+    const summaryList = lastOrderDetails.items.map(i => `${i.quantity}x ${i.name} (${i.variant})`).join("\\n");
 
     const icsData = [
       "BEGIN:VCALENDAR",
@@ -520,7 +536,7 @@
       "BEGIN:VEVENT",
       `SUMMARY:☕ Coffee Express Pickup (${lastOrderDetails.customerName})`,
       `DESCRIPTION:Order Summary:\\n${summaryList}\\nTotal Due: $${lastOrderDetails.total}`,
-      `LOCATION:Gem Community Arts Centre`,
+      `LOCATION:Coffee Express Pickup`,
       `DTSTART:${formatISO(dates.startDate)}`,
       `DTEND:${formatISO(dates.endDate)}`,
       "BEGIN:VALARM",
