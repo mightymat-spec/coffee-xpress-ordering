@@ -1,68 +1,395 @@
-</div>
-</div>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Coffee Xpress Ordering</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 15px; background: #f9f9f9; color: #333; }
+    .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    .form-group { margin-bottom: 15px; }
+    label { display: block; font-weight: bold; margin-bottom: 5px; }
+    select, input[type="date"], input[type="text"], button { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
+    button { background: #0070f3; color: white; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; }
+    button:hover { background: #0051a2; }
+    .modifier-group { margin: 8px 0; }
+    .modifier-group label { font-weight: normal; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
+    .status-msg { padding: 10px; border-radius: 6px; margin-top: 10px; display: none; }
+    .status-msg.success { background: #e6f4ea; color: #137333; display: block; }
+    .status-msg.error { background: #fce8e6; color: #c5221f; display: block; }
+  </style>
+</head>
+<body>
 
-      <!-- Pickup Date Selection -->
+  <div class="card">
+    <h2>☕ Coffee Xpress Order</h2>
+    
+    <form id="order-form" onsubmit="handleOrderSubmit(event)">
+      <!-- Pickup Date -->
       <div class="form-group">
         <label for="pickupDate">Pickup Date</label>
         <input type="date" id="pickupDate" name="pickupDate" required>
       </div>
 
-      <!-- Pickup Time Selection -->
-<div class="form-group">
-<label for="pickupTime">Pickup Time (8:00 AM – 11:00 AM)</label>
-<select id="pickupTime" name="pickupTime" required>
-@@ -219,6 +226,13 @@ <h3 style="margin-top:0; font-size: 16px;">Order Summary</h3>
-let loyverseMenu = { hotDrinks: [], coldDrinks: [], modifiers: [] };
-let cart = [];
+      <!-- Pickup Time -->
+      <div class="form-group">
+        <label for="pickupTime">Pickup Time (8:00 AM – 11:00 AM)</label>
+        <select id="pickupTime" name="pickupTime" required></select>
+      </div>
 
-    function initializeDatePicker() {
-      const dateInput = document.getElementById("pickupDate");
-      const today = new Date().toISOString().split("T")[0];
-      dateInput.min = today;
-      dateInput.value = today;
+      <!-- Category Selection -->
+      <div class="form-group">
+        <label for="categorySelect">Category</label>
+        <select id="categorySelect" onchange="onCategoryChange()" required>
+          <option value="">Select a Category...</option>
+        </select>
+      </div>
+
+      <!-- Item Selection -->
+      <div class="form-group">
+        <label for="itemSelect">Item</label>
+        <select id="itemSelect" onchange="onItemChange()" required disabled>
+          <option value="">Select a Category First...</option>
+        </select>
+      </div>
+
+      <!-- Size / Variant Selection -->
+      <div class="form-group">
+        <label for="variantSelect">Size / Option</label>
+        <select id="variantSelect" required disabled>
+          <option value="">Select an Item First...</option>
+        </select>
+      </div>
+
+      <!-- Modifiers Container -->
+      <div class="form-group">
+        <label>Add-ons / Modifiers</label>
+        <div id="modifiersContainer"><i>Select an item to view add-ons</i></div>
+      </div>
+
+      <button type="button" id="add-to-cart-btn" onclick="addToCart()" disabled>Add to Cart</button>
+    </form>
+  </div>
+
+  <!-- Cart & Summary -->
+  <div class="card">
+    <h3 style="margin-top:0;">Order Summary</h3>
+    <div id="cartList"><i>Your cart is empty.</i></div>
+    <div style="margin-top: 15px; font-weight: bold; font-size: 16px;">
+      Total: $<span id="cartTotal">0.00</span>
+    </div>
+    <button type="submit" form="order-form" id="submit-btn" style="margin-top: 15px;">Place Order</button>
+    <div id="status" class="status-msg"></div>
+  </div>
+
+<script>
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQQCDOBJMU2YEXtekiww-12uXuoZLwOSRCXsoRDYFIf75uq8OEwK-S7sIW_02A/exec";
+
+  let menuData = { categories: [], items: [], modifiers: [] };
+  let cart = [];
+
+  document.addEventListener("DOMContentLoaded", function() {
+    initializeDatePicker();
+    populatePickupTimes();
+    fetchMenuData();
+  });
+
+  function initializeDatePicker() {
+    const dateInput = document.getElementById("pickupDate");
+    const today = new Date().toISOString().split("T")[0];
+    dateInput.min = today;
+    dateInput.value = today;
+  }
+
+  function populatePickupTimes() {
+    const timeSelect = document.getElementById("pickupTime");
+    timeSelect.innerHTML = "";
+    
+    // Generates 15-min slots between 8:00 AM and 11:00 AM
+    let times = [];
+    for (let hour = 8; hour <= 11; hour++) {
+      let maxMin = (hour === 11) ? 0 : 45;
+      for (let min = 0; min <= maxMin; min += 15) {
+        let period = hour >= 12 ? "PM" : "AM";
+        let displayHour = hour > 12 ? hour - 12 : hour;
+        let displayMin = min < 10 ? "0" + min : min;
+        times.push(`${displayHour}:${displayMin} ${period}`);
+      }
+    }
+    
+    times.forEach(t => {
+      const opt = document.createElement("option");
+      opt.value = t;
+      opt.textContent = t;
+      timeSelect.appendChild(opt);
+    });
+  }
+
+  function fetchMenuData() {
+    // JSONP request to Google Apps Script Web App
+    const script = document.createElement('script');
+    script.src = `${APPS_SCRIPT_URL}?callback=handleMenuResponse`;
+    document.body.appendChild(script);
+  }
+
+  function handleMenuResponse(data) {
+    if (data.status === "error") {
+      showStatus("Error loading menu: " + data.message, false);
+      return;
     }
 
-function populateModifiers(modifiers) {
-const container = document.getElementById("modifiersContainer");
-container.innerHTML = "";
-@@ -297,7 +311,15 @@ <h3 style="margin-top:0; font-size: 16px;">Order Summary</h3>
-const opt = document.createElement("option");
-opt.value = v.option_name;
-opt.dataset.price = v.price;
-            opt.textContent = `${v.option_name} ($${v.price.toFixed(2)})`;
+    menuData = data;
+    populateCategories();
+  }
 
-            let labelName = v.option_name;
-            if (v.option_name.toLowerCase().includes("small") || v.price === 5) {
-              labelName = "Small (8oz)";
-            } else if (v.option_name.toLowerCase().includes("large") || v.price === 6) {
-              labelName = "Large (12oz)";
-            }
+  function populateCategories() {
+    const catSelect = document.getElementById("categorySelect");
+    catSelect.innerHTML = '<option value="">Select a Category...</option>';
 
-            opt.textContent = `${labelName} ($${v.price.toFixed(2)})`;
-variantSelect.appendChild(opt);
-});
-}
-@@ -341,7 +363,6 @@ <h3 style="margin-top:0; font-size: 16px;">Order Summary</h3>
-cart.push(cartItem);
-renderCart();
+    if (!menuData.categories || menuData.categories.length === 0) {
+      catSelect.innerHTML = '<option value="">No Categories Available</option>';
+      return;
+    }
 
-      // Clear selections for next item
-document.querySelectorAll('.modifier-checkbox').forEach(cb => cb.checked = false);
-}
+    menuData.categories.forEach(cat => {
+      const opt = document.createElement("option");
+      opt.value = cat.id;
+      opt.textContent = cat.name;
+      catSelect.appendChild(opt);
+    });
+  }
 
-@@ -424,6 +445,7 @@ <h3 style="margin-top:0; font-size: 16px;">Order Summary</h3>
-status.className = "status-msg success";
-status.textContent = "✅ Order placed successfully! Payment is due on pickup.";
-document.getElementById("order-form").reset();
-        initializeDatePicker();
-cart = [];
-renderCart();
-const btn = document.getElementById("submit-btn");
-@@ -433,6 +455,7 @@ <h3 style="margin-top:0; font-size: 16px;">Order Summary</h3>
-}
-});
+  function onCategoryChange() {
+    const catId = document.getElementById("categorySelect").value;
+    const itemSelect = document.getElementById("itemSelect");
+    itemSelect.innerHTML = '<option value="">Select an Item...</option>';
+    
+    resetVariantAndModifiers();
 
+    if (!catId) {
+      itemSelect.disabled = true;
+      return;
+    }
+
+    // Filter items matching selected category ID
+    const filteredItems = menuData.items.filter(item => item.category_id === catId);
+
+    if (filteredItems.length === 0) {
+      itemSelect.innerHTML = '<option value="">No items in this category</option>';
+      itemSelect.disabled = true;
+      return;
+    }
+
+    filteredItems.forEach(item => {
+      const opt = document.createElement("option");
+      opt.value = item.id;
+      opt.textContent = item.name || item.item_name;
+      itemSelect.appendChild(opt);
+    });
+
+    itemSelect.disabled = false;
+  }
+
+  function onItemChange() {
+    const itemId = document.getElementById("itemSelect").value;
+    const variantSelect = document.getElementById("variantSelect");
+    const addToCartBtn = document.getElementById("add-to-cart-btn");
+
+    if (!itemId) {
+      resetVariantAndModifiers();
+      return;
+    }
+
+    const selectedItem = menuData.items.find(item => item.id === itemId);
+    if (!selectedItem) return;
+
+    // 1. Populate Variants / Sizes
+    variantSelect.innerHTML = "";
+    const variants = selectedItem.variants || [];
+
+    variants.forEach(v => {
+      const opt = document.createElement("option");
+      opt.value = v.variant_id || v.id;
+      
+      // Determine variant price safely
+      let price = v.default_price !== undefined ? v.default_price : 0;
+      if (v.stores && v.stores.length > 0 && v.stores[0].price !== undefined) {
+        price = v.stores[0].price;
+      }
+      
+      opt.dataset.price = price;
+      
+      // Determine label name safely
+      let labelName = v.option1_value || v.name || selectedItem.name || "Standard";
+      opt.textContent = `${labelName} ($${parseFloat(price).toFixed(2)})`;
+      
+      variantSelect.appendChild(opt);
+    });
+
+    variantSelect.disabled = variants.length === 0;
+
+    // 2. Populate Modifiers / Add-ons
+    populateModifiers(selectedItem);
+
+    addToCartBtn.disabled = false;
+  }
+
+  function populateModifiers(item) {
+    const container = document.getElementById("modifiersContainer");
+    container.innerHTML = "";
+
+    const itemModIds = item.modifier_ids || [];
+    if (itemModIds.length === 0 || !menuData.modifiers) {
+      container.innerHTML = "<i>No add-ons available for this item.</i>";
+      return;
+    }
+
+    const availableModifiers = menuData.modifiers.filter(m => itemModIds.includes(m.id));
+
+    if (availableModifiers.length === 0) {
+      container.innerHTML = "<i>No add-ons available.</i>";
+      return;
+    }
+
+    availableModifiers.forEach(mod => {
+      const groupDiv = document.createElement("div");
+      groupDiv.className = "modifier-group";
+
+      const title = document.createElement("strong");
+      title.textContent = mod.name + ": ";
+      groupDiv.appendChild(title);
+
+      const options = mod.options || mod.modifier_options || [];
+      options.forEach(opt => {
+        const label = document.createElement("label");
+        const checkbox = document.createElement("input");
+        checkbox.type = "checkbox";
+        checkbox.className = "modifier-checkbox";
+        checkbox.value = opt.name;
+        checkbox.dataset.price = opt.price || 0;
+
+        let priceText = opt.price > 0 ? ` (+$${parseFloat(opt.price).toFixed(2)})` : "";
+        label.appendChild(checkbox);
+        label.appendChild(document.createTextNode(` ${opt.name}${priceText}`));
+
+        groupDiv.appendChild(label);
+      });
+
+      container.appendChild(groupDiv);
+    });
+  }
+
+  function resetVariantAndModifiers() {
+    const variantSelect = document.getElementById("variantSelect");
+    const container = document.getElementById("modifiersContainer");
+    const addToCartBtn = document.getElementById("add-to-cart-btn");
+
+    variantSelect.innerHTML = '<option value="">Select an Item First...</option>';
+    variantSelect.disabled = true;
+    container.innerHTML = "<i>Select an item to view add-ons</i>";
+    addToCartBtn.disabled = true;
+  }
+
+  function addToCart() {
+    const itemSelect = document.getElementById("itemSelect");
+    const variantSelect = document.getElementById("variantSelect");
+    
+    if (!itemSelect.value) return;
+
+    const itemId = itemSelect.value;
+    const itemObj = menuData.items.find(i => i.id === itemId);
+    const selectedVariantOpt = variantSelect.options[variantSelect.selectedIndex];
+
+    const variantName = selectedVariantOpt ? selectedVariantOpt.textContent : "";
+    const variantPrice = selectedVariantOpt ? parseFloat(selectedVariantOpt.dataset.price || 0) : 0;
+
+    // Selected Modifiers
+    let selectedMods = [];
+    let modPriceTotal = 0;
+
+    document.querySelectorAll(".modifier-checkbox:checked").forEach(cb => {
+      let modPrice = parseFloat(cb.dataset.price || 0);
+      selectedMods.push(cb.value);
+      modPriceTotal += modPrice;
+    });
+
+    const cartItem = {
+      name: itemObj.name || itemObj.item_name,
+      variant: variantName,
+      price: variantPrice + modPriceTotal,
+      modifiers: selectedMods
+    };
+
+    cart.push(cartItem);
+    renderCart();
+
+    // Reset modifier checkboxes
+    document.querySelectorAll(".modifier-checkbox").forEach(cb => cb.checked = false);
+  }
+
+  function renderCart() {
+    const cartList = document.getElementById("cartList");
+    const cartTotal = document.getElementById("cartTotal");
+
+    if (cart.length === 0) {
+      cartList.innerHTML = "<i>Your cart is empty.</i>";
+      cartTotal.textContent = "0.00";
+      return;
+    }
+
+    cartList.innerHTML = "";
+    let total = 0;
+
+    cart.forEach((item, idx) => {
+      total += item.price;
+      const div = document.createElement("div");
+      div.className = "cart-item";
+      
+      let modText = item.modifiers.length > 0 ? `<br><small>+ ${item.modifiers.join(", ")}</small>` : "";
+      
+      div.innerHTML = `
+        <div>
+          <strong>${item.name}</strong> (${item.variant})${modText}
+        </div>
+        <div>
+          $${item.price.toFixed(2)} 
+          <button type="button" onclick="removeFromCart(${idx})" style="width:auto; padding: 2px 8px; margin-left: 8px; background: #dc3545;">✕</button>
+        </div>
+      `;
+      cartList.appendChild(div);
+    });
+
+    cartTotal.textContent = total.toFixed(2);
+  }
+
+  function removeFromCart(index) {
+    cart.splice(index, 1);
+    renderCart();
+  }
+
+  function handleOrderSubmit(e) {
+    e.preventDefault();
+    if (cart.length === 0) {
+      showStatus("Please add at least one item to your cart before ordering.", false);
+      return;
+    }
+
+    showStatus("✅ Order placed successfully! Payment is due on pickup.", true);
+    
+    // Clear state
+    cart = [];
+    renderCart();
+    document.getElementById("order-form").reset();
     initializeDatePicker();
-populatePickupTimes();
-fetchMenu();
+    resetVariantAndModifiers();
+  }
+
+  function showStatus(msg, isSuccess) {
+    const status = document.getElementById("status");
+    status.className = "status-msg " + (isSuccess ? "success" : "error");
+    status.textContent = msg;
+  }
 </script>
+</body>
+</html>
