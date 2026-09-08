@@ -9,30 +9,43 @@
     .card { background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-bottom: 20px; border: 1px solid #334155; }
     .form-group { margin-bottom: 15px; }
     label { display: block; font-weight: 600; margin-bottom: 6px; color: #cbd5e1; }
-    select, input[type="date"], button { width: 100%; padding: 12px; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #f8fafc; font-size: 14px; box-sizing: border-box; }
+    select, input[type="date"], input[type="text"], button { width: 100%; padding: 12px; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #f8fafc; font-size: 14px; box-sizing: border-box; }
     button { background: #2563eb; color: #ffffff; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; border-radius: 8px; }
     button:hover { background: #1d4ed8; }
     button:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
-    .modifier-group { margin: 10px 0; padding: 10px; background: #0f172a; border-radius: 6px; }
-    .modifier-group label { font-weight: normal; display: flex; align-items: center; gap: 8px; cursor: pointer; color: #e2e8f0; margin-top: 4px; }
+    
+    /* Modifier Formatting Fixes */
+    .modifier-group { margin: 12px 0; padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; }
+    .modifier-group strong { display: block; margin-bottom: 8px; color: #38bdf8; font-size: 14px; }
+    .modifier-options-list { display: flex; flex-direction: column; gap: 8px; }
+    .modifier-options-list label { font-weight: normal; display: flex; align-items: center; gap: 10px; cursor: pointer; color: #e2e8f0; margin: 0; }
+    .modifier-checkbox { width: 18px; height: 18px; accent-color: #2563eb; cursor: pointer; }
+
     .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #334155; }
     .status-msg { padding: 12px; border-radius: 8px; margin-top: 15px; display: none; }
     .status-msg.success { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; display: block; }
     .status-msg.error { background: #7f1d1d; color: #fca5a5; border: 1px solid #dc2626; display: block; }
-    .calendar-actions { display: flex; gap: 10px; margin-top: 12px; }
-    .calendar-btn { background: #059669; font-size: 13px; padding: 10px; }
+    
+    .calendar-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+    .calendar-btn { background: #059669; font-size: 14px; padding: 12px; }
     .calendar-btn:hover { background: #047857; }
-    .ics-btn { background: #4f46e5; font-size: 13px; padding: 10px; }
+    .ics-btn { background: #4f46e5; font-size: 14px; padding: 12px; }
     .ics-btn:hover { background: #4338ca; }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h2>☕ Coffee Express Pickup</h2>
+    <h2>☕ Coffee Express Order</h2>
     
     <form id="order-form" onsubmit="handleOrderSubmit(event)">
-      <!-- Pickup Date (Tuesdays / Thursdays Only) -->
+      <!-- Customer Name -->
+      <div class="form-group">
+        <label for="customerName">Your Name</label>
+        <input type="text" id="customerName" name="customerName" placeholder="Enter your name" required>
+      </div>
+
+      <!-- Pickup Date (Tuesdays & Thursdays Only) -->
       <div class="form-group">
         <label for="pickupDate">Pickup Date (Tuesdays & Thursdays Only)</label>
         <input type="date" id="pickupDate" name="pickupDate" required>
@@ -90,8 +103,8 @@
     <div id="status" class="status-msg"></div>
     <div id="calendarArea" style="display: none;">
       <div class="calendar-actions">
-        <button type="button" class="calendar-btn" onclick="addToGoogleCalendar()">📅 Add to Google Calendar</button>
-        <button type="button" class="ics-btn" onclick="downloadICSFile()">⏰ Download Reminder (.ics)</button>
+        <button type="button" class="calendar-btn" onclick="addToGoogleCalendar()">📅 Add Pickup to Google Calendar</button>
+        <button type="button" class="ics-btn" onclick="downloadICSFile()">⏰ Download Reminder (.ics file)</button>
       </div>
     </div>
   </div>
@@ -109,26 +122,30 @@
     fetchMenuData();
   });
 
-  // --- Date Picker (Tuesdays & Thursdays Only) ---
+  // --- Date Picker Logic (Tuesdays & Thursdays Only) ---
   function initializeDatePicker() {
     const dateInput = document.getElementById("pickupDate");
     let target = new Date();
 
-    // Advance date until Tuesday (2) or Thursday (4)
+    // If today is Tue (2) or Thu (4) but past 11 AM, advance to tomorrow
+    if ((target.getDay() === 2 || target.getDay() === 4) && target.getHours() >= 11) {
+      target.setDate(target.getDate() + 1);
+    }
+
+    // Advance until target is Tuesday (2) or Thursday (4)
     while (target.getDay() !== 2 && target.getDay() !== 4) {
       target.setDate(target.getDate() + 1);
     }
 
-    const yyyy = target.getFullYear();
-    const mm = String(target.getMonth() + 1).padStart(2, '0');
-    const dd = String(target.getDate()).padStart(2, '0');
-    const dateStr = `${yyyy}-${mm}-${dd}`;
+    const formatDateStr = d => {
+      const yyyy = d.getFullYear();
+      const mm = String(d.getMonth() + 1).padStart(2, '0');
+      const dd = String(d.getDate()).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    };
 
-    const today = new Date();
-    const minStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
-    
-    dateInput.min = minStr;
-    dateInput.value = dateStr;
+    dateInput.min = formatDateStr(new Date());
+    dateInput.value = formatDateStr(target);
     dateInput.onchange = validatePickupDate;
   }
 
@@ -204,7 +221,7 @@
   function onCategoryChange() {
     const catId = document.getElementById("categorySelect").value;
     const itemSelect = document.getElementById("itemSelect");
-    itemSelect.innerHTML = '<option value="">Select an Item...</option>';
+    itemSelect.innerHTML = '<option value="">Select a Drink...</option>';
     
     resetVariantAndModifiers();
 
@@ -244,7 +261,7 @@
     const selectedItem = menuData.items.find(item => item.id === itemId);
     if (!selectedItem) return;
 
-    // Populate Variants
+    // Populate Variants / Sizes
     variantSelect.innerHTML = "";
     const variants = selectedItem.variants || [];
 
@@ -253,14 +270,25 @@
       opt.value = v.variant_id || v.id;
       
       let price = (v.default_price !== undefined && v.default_price !== null) 
-        ? v.default_price 
-        : (v.stores && v.stores[0] ? v.stores[0].price : 0);
+        ? parseFloat(v.default_price)
+        : (v.stores && v.stores[0] ? parseFloat(v.stores[0].price) : 0);
         
       opt.dataset.price = price;
       
-      let labelName = v.option1_value || v.name || "Standard";
+      // Determine Variant Label
+      let labelName = v.option1_value;
+      if (!labelName) {
+        if (price === 5 || (v.sku && v.sku.toLowerCase().includes("small"))) {
+          labelName = "Small (8oz)";
+        } else if (price === 6 || (v.sku && v.sku.toLowerCase().includes("large"))) {
+          labelName = "Large (12oz)";
+        } else {
+          labelName = variants.length === 1 ? "Standard" : "Regular";
+        }
+      }
+
       opt.dataset.label = labelName;
-      opt.textContent = `${labelName} ($${parseFloat(price).toFixed(2)})`;
+      opt.textContent = `${labelName} ($${price.toFixed(2)})`;
       
       variantSelect.appendChild(opt);
     });
@@ -279,7 +307,7 @@
 
     const itemModIds = item.modifier_ids || [];
     if (itemModIds.length === 0 || !menuData.modifiers) {
-      container.innerHTML = "<i>No add-ons for this item.</i>";
+      container.innerHTML = "<i>No add-ons available for this drink.</i>";
       return;
     }
 
@@ -295,8 +323,11 @@
       groupDiv.className = "modifier-group";
 
       const title = document.createElement("strong");
-      title.textContent = mod.name + ":";
+      title.textContent = mod.name;
       groupDiv.appendChild(title);
+
+      const optionsList = document.createElement("div");
+      optionsList.className = "modifier-options-list";
 
       const options = mod.modifier_options || mod.options || [];
       options.forEach(opt => {
@@ -306,16 +337,17 @@
         checkbox.className = "modifier-checkbox";
         checkbox.value = opt.name || opt.option_name;
         
-        let optPrice = opt.price !== undefined ? opt.price : (opt.default_price || 0);
+        let optPrice = parseFloat(opt.price !== undefined ? opt.price : (opt.default_price || 0));
         checkbox.dataset.price = optPrice;
 
-        let priceText = optPrice > 0 ? ` (+$${parseFloat(optPrice).toFixed(2)})` : "";
+        let priceText = optPrice > 0 ? ` (+$${optPrice.toFixed(2)})` : "";
         label.appendChild(checkbox);
         label.appendChild(document.createTextNode(` ${opt.name || opt.option_name}${priceText}`));
 
-        groupDiv.appendChild(label);
+        optionsList.appendChild(label);
       });
 
+      groupDiv.appendChild(optionsList);
       container.appendChild(groupDiv);
     });
   }
@@ -413,10 +445,12 @@
       return;
     }
 
+    const custName = document.getElementById("customerName").value;
     const pDate = document.getElementById("pickupDate").value;
     const pTime = document.getElementById("pickupTime").value;
 
     lastOrderDetails = {
+      customerName: custName,
       date: pDate,
       time: pTime,
       items: [...cart],
@@ -439,7 +473,7 @@
     status.textContent = msg;
   }
 
-  // --- Calendar Integration ---
+  // --- Calendar & Reminder Integration ---
   function getOrderStartEndDates() {
     if (!lastOrderDetails) return null;
     const [year, month, day] = lastOrderDetails.date.split("-").map(Number);
@@ -450,7 +484,7 @@
     if (period === "AM" && hours === 12) hours = 0;
 
     const startDate = new Date(year, month - 1, day, hours, minutes);
-    const endDate = new Date(startDate.getTime() + 15 * 60000); // 15 mins
+    const endDate = new Date(startDate.getTime() + 15 * 60000); // 15 mins duration
 
     return { startDate, endDate };
   }
@@ -462,8 +496,8 @@
     const formatISO = d => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
     
     const summaryList = lastOrderDetails.items.map(i => `${i.name} (${i.variant})`).join(", ");
-    const title = encodeURIComponent("☕ Coffee Express Order Pickup");
-    const details = encodeURIComponent(`Order Summary:\n${summaryList}\n\nTotal: $${lastOrderDetails.total}`);
+    const title = encodeURIComponent(`☕ Coffee Express Pickup (${lastOrderDetails.customerName})`);
+    const details = encodeURIComponent(`Order Details:\n${summaryList}\n\nTotal Due: $${lastOrderDetails.total}`);
     const location = encodeURIComponent("Gem Community Arts Centre");
 
     const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatISO(dates.startDate)}/${formatISO(dates.endDate)}&details=${details}&location=${location}`;
@@ -481,16 +515,18 @@
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
       "PRODID:-//Coffee Express//Order Pickup//EN",
+      "CALSCALE:GREGORIAN",
+      "METHOD:PUBLISH",
       "BEGIN:VEVENT",
-      `SUMMARY:☕ Coffee Express Order Pickup`,
-      `DESCRIPTION:Order Summary:\\n${summaryList}\\nTotal: $${lastOrderDetails.total}`,
+      `SUMMARY:☕ Coffee Express Pickup (${lastOrderDetails.customerName})`,
+      `DESCRIPTION:Order Summary:\\n${summaryList}\\nTotal Due: $${lastOrderDetails.total}`,
       `LOCATION:Gem Community Arts Centre`,
       `DTSTART:${formatISO(dates.startDate)}`,
       `DTEND:${formatISO(dates.endDate)}`,
       "BEGIN:VALARM",
       "TRIGGER:-PT15M",
       "ACTION:DISPLAY",
-      "DESCRIPTION:Pickup Coffee Express Order in 15 minutes",
+      "DESCRIPTION:Coffee Express order pickup in 15 minutes!",
       "END:VALARM",
       "END:VEVENT",
       "END:VCALENDAR"
