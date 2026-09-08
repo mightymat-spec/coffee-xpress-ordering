@@ -135,12 +135,14 @@
 
   <div class="order-card">
     <div class="brand-header">
-      <img src="https://www.gemcoplayers.org/uploads/1/3/3/8/133802778/gem-placeholder-logo-v22_orig.jpg" alt="Gemco Players Community Theatre & The Gem Community Arts Centre" class="gemco-joint-logo">
+      <!-- Direct relative path to logo file uploaded in your repo -->
+      <img src="GEM_placeHolder_logo_V22.jpg" alt="Gemco Players Community Theatre & The Gem Community Arts Centre" class="gemco-joint-logo">
       <h2>Coffee Express</h2>
     </div>
 
     <div class="charity-banner">
-      <img src="https://www.acnc.gov.au/sites/default/files/ACNC-Registered-Charity-Logo_RGB.png" alt="ACNC Registered Charity Tick" class="acnc-tick-img">
+      <!-- Direct relative path to charity tick file uploaded in your repo -->
+      <img src="ACNC-Registered-Charity-Logo_RGB.png" alt="ACNC Registered Charity Tick" class="acnc-tick-img">
       <span>All proceeds support the Gem Community Arts Centre</span>
     </div>
 
@@ -264,7 +266,7 @@
         }
       } catch (err) {
         console.error("Menu load error:", err);
-        select.innerHTML = '<option value="" data-price="0">-- Unable to load drinks --</option>';
+        select.innerHTML = '<option value="" data-price="0">-- Select Drink / Item --</option>';
         if (status) {
           status.className = "status-msg error";
           status.textContent = "⚠️ Unable to load live menu prices. Please try refreshing.";
