@@ -331,7 +331,92 @@
     ["variant", "modifier1", "modifier2"].forEach(id => {
       document.getElementById(id).addEventListener("change", updateTotal);
     });
+<!-- Quantity & Add Item Button -->
+<div class="form-group">
+  <label for="itemQuantity">Quantity</label>
+  <input type="number" id="itemQuantity" min="1" max="10" value="1" class="form-control">
+</div>
 
+<button type="button" id="addToCartBtn" class="btn btn-secondary" onclick="addToCart()">Add Item to Order</button>
+
+<!-- Order Summary Section -->
+<div class="order-summary-container" style="margin-top: 20px; background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px;">
+  <h3>Order Summary</h3>
+  <div id="cartItemsList">
+    <p style="color: #aaa;">No items added yet.</p>
+  </div>
+  <hr style="border-color: rgba(255,255,255,0.1);">
+  <div style="display: flex; justify-content: space-between; font-weight: bold;">
+    <span>Grand Total:</span>
+    <span id="grandTotal">$0.00</span>
+  </div>
+  let cart = [];
+
+function addToCart() {
+  const drinkSelect = document.getElementById('drinkItem');
+  const variantSelect = document.getElementById('variantSize');
+  const milkSelect = document.getElementById('milkSyrup');
+  const customSelect = document.getElementById('customization2');
+  const qty = parseInt(document.getElementById('itemQuantity').value) || 1;
+
+  if (!drinkSelect.value) {
+    alert("Please select a drink item.");
+    return;
+  }
+
+  // Calculate single item base price + extras
+  const itemPrice = calculateCurrentItemPrice(); 
+
+  const cartItem = {
+    id: Date.now(),
+    drink: drinkSelect.options[drinkSelect.selectedIndex].text,
+    variant: variantSelect.options[variantSelect.selectedIndex].text,
+    milk: milkSelect.options[milkSelect.selectedIndex].text,
+    custom: customSelect.options[customSelect.selectedIndex].text,
+    quantity: qty,
+    unitPrice: itemPrice,
+    totalPrice: itemPrice * qty
+  };
+
+  cart.push(cartItem);
+  renderCart();
+}
+
+function removeFromCart(id) {
+  cart = cart.filter(item => item.id !== id);
+  renderCart();
+}
+
+function renderCart() {
+  const listContainer = document.getElementById('cartItemsList');
+  const grandTotalEl = document.getElementById('grandTotal');
+
+  if (cart.length === 0) {
+    listContainer.innerHTML = `<p style="color: #aaa;">No items added yet.</p>`;
+    grandTotalEl.innerText = `$0.00`;
+    return;
+  }
+
+  let total = 0;
+  listContainer.innerHTML = cart.map(item => {
+    total += item.totalPrice;
+    return `
+      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px;">
+        <div>
+          <strong>${item.quantity}x ${item.drink}</strong> (${item.variant})<br>
+          <small>${item.milk} | ${item.custom}</small>
+        </div>
+        <div style="text-align:right;">
+          <div>$${item.totalPrice.toFixed(2)}</div>
+          <button type="button" onclick="removeFromCart(${item.id})" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size:12px;">Remove</button>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  grandTotalEl.innerText = `$${total.toFixed(2)}`;
+}
+</div>
     document.getElementById("order-form").addEventListener("submit", function() {
       submitted = true;
       const btn = document.getElementById("submit-btn");
