@@ -112,7 +112,6 @@
     button:disabled { background: #64748b; }
     .status-msg { margin-top: 15px; text-align: center; font-weight: 600; }
     .success { color: #4ade80; }
-    .error { color: #f87171; }
   </style>
 </head>
 <body>
@@ -121,7 +120,7 @@
 
   <div class="order-card">
     <div class="brand-header">
-      <img src="GEM_placeHolder_logo_V22.jpg" alt="Gemco Players" class="gemco-joint-logo">
+      <img src="GEM_placeHolder_logo_V2.jpg" alt="Gemco Players" class="gemco-joint-logo">
       <h2>Coffee Express</h2>
     </div>
 
@@ -133,7 +132,7 @@
     <div class="payment-notice">💳 Payment on Pick Up</div>
     <div class="hours-info">📅 Open Tuesday & Thursday mornings (8:00 AM – 11:00 AM) during school terms.</div>
 
-    <form id="order-form" action="https://script.google.com/macros/s/AKfycbyPGbb6wVaFi8ZU3RRC1EPtJyaCypUJ_FM9xq_v4zBzlql-J5jfhyeorWy4gPA1Qu06/exec" method="POST" target="hidden_iframe">
+    <form id="order-form" action="https://script.google.com/macros/s/AKfycbzQQCDOBJMU2YEXtekiww-12uXuoZLwOSRCXsoRDYFIf75uq8OEwK-S7sIW_0PAn-ZJ/exec" method="POST" target="hidden_iframe">
       
       <div class="form-group">
         <label for="customerName">Your Name</label>
@@ -143,15 +142,7 @@
       <div class="form-group">
         <label for="coffeeType">Coffee / Drink Type</label>
         <select id="coffeeType" name="coffeeType" required>
-          <option value="" data-price="0">-- Select Drink --</option>
-          <option value="Espresso" data-price="3">Espresso ($3.00)</option>
-          <option value="Cappuccino" data-price="4">Cappuccino ($4.00)</option>
-          <option value="Latte" data-price="4.5">Latte ($4.50)</option>
-          <option value="Americano" data-price="3.5">Americano ($3.50)</option>
-          <option value="Cold Brew" data-price="4.5">Cold Brew ($4.50)</option>
-          <option value="Iced Latte" data-price="4.75">Iced Latte ($4.75)</option>
-          <option value="Croissant" data-price="3.25">Croissant ($3.25)</option>
-          <option value="Muffin" data-price="3">Muffin ($3.00)</option>
+          <option value="" data-price="0">Loading menu from Loyverse...</option>
         </select>
       </div>
 
@@ -213,6 +204,30 @@
   <script>
     let submitted = false;
 
+    function renderLoyverseMenu(data) {
+      const select = document.getElementById("coffeeType");
+      select.innerHTML = '<option value="" data-price="0">-- Select Item --</option>';
+
+      if (data && data.status === "success" && data.items.length > 0) {
+        data.items.forEach(item => {
+          const opt = document.createElement("option");
+          opt.value = item.name;
+          opt.dataset.price = item.price;
+          opt.textContent = `${item.name} ($${item.price.toFixed(2)})`;
+          select.appendChild(opt);
+        });
+      } else {
+        select.innerHTML = '<option value="" data-price="0">No coffee items found</option>';
+      }
+      updateTotal();
+    }
+
+    function fetchMenu() {
+      const script = document.createElement("script");
+      script.src = "https://script.google.com/macros/s/AKfycbzQQCDOBJMU2YEXtekiww-12uXuoZLwOSRCXsoRDYFIf75uq8OEwK-S7sIW_0PAn-ZJ/exec?callback=renderLoyverseMenu";
+      document.body.appendChild(script);
+    }
+
     function populatePickupTimes() {
       const select = document.getElementById("pickupTime");
       for (let time = 8 * 60; time <= 11 * 60; time += 5) {
@@ -271,7 +286,7 @@
     });
 
     populatePickupTimes();
-    updateTotal();
+    fetchMenu();
   </script>
 </body>
 </html>
