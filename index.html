@@ -238,15 +238,21 @@
       return;
     }
 
-    // Robust String comparison for category IDs
+    // Filter items matching the category ID
     let filteredItems = menuData.items.filter(item => 
-      String(item.category_id).trim() === String(catId).trim()
+      String(item.category_id || "").trim() === String(catId).trim()
     );
 
-    // Fallback: If no items match category_id directly, list all active drinks
-    if (filteredItems.length === 0) {
-      console.warn("No category_id match found for " + catId + ". Showing all drinks.");
+    // Fallback: If Loyverse items have unassigned or mismatched category IDs, show all drinks
+    if (filteredItems.length === 0 && menuData.items.length > 0) {
+      console.warn("No direct category match for ID " + catId + ". Displaying all available drinks.");
       filteredItems = menuData.items;
+    }
+
+    if (filteredItems.length === 0) {
+      itemSelect.innerHTML = '<option value="">No drinks available</option>';
+      itemSelect.disabled = true;
+      return;
     }
 
     filteredItems.forEach(item => {
@@ -257,6 +263,7 @@
     });
 
     itemSelect.disabled = false;
+  }
   }
 
   function onItemChange() {
