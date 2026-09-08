@@ -4,37 +4,23 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Coffee Express - Order</title>
-
-  <!-- Mobile Web App Meta Tags -->
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Coffee Express">
-  <meta name="application-name" content="Coffee Express">
-  <meta name="theme-color" content="#121212">
-
-  <!-- Web App Icon (Embedded SVG Favicon + Touch Icon) -->
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23121212'/><text y='70' x='15' font-size='65'>☕</text></svg>">
-  <link rel="apple-touch-icon" href="apple-touch-icon.png">
-
   <style>
     :root {
       --bg-color: #121212;
       --card-bg: #1e1e1e;
-      --accent: #14b8a6;
-      --accent-dark: #0f766e;
-      --text-main: #f8fafc;
-      --text-muted: #94a3b8;
       --input-bg: #2a2a2a;
-      --border-color: #333333;
+      --text-color: #f3f4f6;
+      --subtext-color: #9ca3af;
+      --accent-color: #14b8a6;
+      --accent-hover: #0d9488;
+      --danger-color: #ef4444;
+      --border-color: #374151;
     }
 
-    * { box-sizing: border-box; }
-    
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       background-color: var(--bg-color);
-      color: var(--text-main);
+      color: var(--text-color);
       margin: 0;
       padding: 20px;
       display: flex;
@@ -43,471 +29,413 @@
 
     .container {
       width: 100%;
-      max-width: 500px;
+      max-width: 480px;
       background-color: var(--card-bg);
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      border: 1px solid var(--border-color);
-    }
-
-    header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
-
-    header img {
-      max-width: 120px;
       border-radius: 12px;
-      margin-bottom: 10px;
+      padding: 24px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     }
 
-    h2 {
-      margin: 0;
-      color: var(--accent);
-      font-size: 24px;
-      letter-spacing: 0.5px;
-    }
-
-    .payment-notice, .hours-info {
-      text-align: center;
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-top: 6px;
-    }
-
-    .reorder-banner {
-      display: none;
-      background: var(--accent-dark);
-      border: 1px solid var(--accent);
-      color: #ccfbf1;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 18px;
+    h1, h3 {
+      margin-top: 0;
       text-align: center;
     }
 
-    .reorder-btn, .cal-btn {
-      background: var(--accent);
-      color: #042f2e;
-      border: none;
-      padding: 8px 14px;
-      font-weight: bold;
-      border-radius: 6px;
-      cursor: pointer;
-      margin-top: 8px;
-      font-size: 13px;
+    .form-group {
+      margin-bottom: 16px;
     }
 
-    .cal-btn {
-      width: 100%;
-      background: #2a2a2a;
-      color: #14b8a6;
-      border: 1px solid #14b8a6;
-      margin-top: 10px;
-      padding: 10px;
+    label {
+      display: block;
       font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--subtext-color);
     }
 
-    .form-group { margin-bottom: 18px; }
-    
-    label { 
-      display: block; 
-      font-weight: 600; 
-      margin-bottom: 6px; 
-      font-size: 14px; 
-      color: #e2e8f0; 
-    }
-
-    input, select, textarea {
+    input[type="text"],
+    input[type="tel"],
+    input[type="time"],
+    input[type="number"],
+    select,
+    textarea {
       width: 100%;
-      padding: 12px;
+      padding: 10px 12px;
       background-color: var(--input-bg);
       border: 1px solid var(--border-color);
-      border-radius: 8px;
-      color: #fff;
+      border-radius: 6px;
+      color: var(--text-color);
       font-size: 15px;
-      outline: none;
+      box-sizing: border-box;
     }
 
     input:focus, select:focus, textarea:focus {
-      border-color: var(--accent);
+      outline: none;
+      border-color: var(--accent-color);
     }
 
-    .formatted-date-label {
-      font-size: 13px;
-      color: var(--accent);
-      margin-top: 5px;
-      font-weight: 500;
-      min-height: 18px;
+    .variants-box {
+      background-color: var(--input-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .variant-label {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      cursor: pointer;
+    }
+
+    .variant-label input[type="checkbox"] {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent-color);
+      cursor: pointer;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: background-color 0.2s;
     }
 
     .btn-add {
-      width: 100%;
-      background: transparent;
-      border: 1px solid var(--accent);
-      color: var(--accent);
-      padding: 12px;
-      border-radius: 8px;
-      font-weight: bold;
-      cursor: pointer;
-      margin-bottom: 20px;
+      background-color: var(--input-bg);
+      color: var(--accent-color);
+      border: 1px solid var(--accent-color);
+    }
+
+    .btn-add:hover {
+      background-color: var(--accent-color);
+      color: #fff;
     }
 
     .btn-submit {
-      width: 100%;
-      background: var(--accent);
-      color: #000;
-      border: none;
-      padding: 14px;
-      border-radius: 8px;
-      font-weight: bold;
-      font-size: 16px;
-      cursor: pointer;
+      background-color: var(--accent-color);
+      color: #ffffff;
+      margin-top: 16px;
     }
 
-    .btn-submit:disabled {
-      background: #555;
-      cursor: not-allowed;
+    .btn-submit:hover {
+      background-color: var(--accent-hover);
     }
 
     .divider {
       height: 1px;
-      background: var(--border-color);
-      margin: 20px 0;
-    }
-
-    #cart-summary {
-      background: var(--input-bg);
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 15px;
-      font-size: 14px;
+      background-color: var(--border-color);
+      margin: 24px 0;
     }
 
     .cart-item {
       display: flex;
       justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
       border-bottom: 1px solid var(--border-color);
-      padding: 8px 0;
     }
-    .cart-item:last-child { border-bottom: none; }
-    .remove-btn { color: #ef4444; cursor: pointer; border: none; background: none; font-weight: bold; }
+
+    .cart-item-details {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .cart-item-title {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .cart-item-sub {
+      font-size: 13px;
+      color: var(--subtext-color);
+    }
+
+    .cart-item-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .cart-item-price {
+      font-weight: 600;
+      color: var(--accent-color);
+    }
+
+    .btn-remove {
+      background: none;
+      border: none;
+      color: var(--danger-color);
+      font-size: 18px;
+      font-weight: bold;
+      cursor: pointer;
+      padding: 0 4px;
+    }
+
+    .cart-total {
+      display: flex;
+      justify-content: space-between;
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 16px;
+    }
+
+    .status-msg {
+      font-size: 13px;
+      color: var(--subtext-color);
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
-  <header>
-    <img src="logo.png" alt="Coffee Express Logo" onerror="this.style.display='none'">
-    <h2>Coffee Express</h2>
-    <div class="payment-notice">💳 Payment on Pick Up</div>
-    <div class="hours-info">📅 Open Tuesday & Thursday mornings (8:00 AM – 11:00 AM) during school terms.</div>
-  </header>
-
-  <div id="reorderBanner" class="reorder-banner">
-    <div id="reorderSummary" style="font-size: 13px;"></div>
-    <button type="button" class="reorder-btn" onclick="loadPreviousOrder()">⚡ Load Last Order</button>
-  </div>
-
-  <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;" onload="if(submitted){completeSubmission();}"></iframe>
+  <h1>Coffee Express</h1>
   
-  <form id="order-form" action="https://script.google.com/macros/s/AKfycbzQQCDOBJMU2YEXtekiww-12uXuoZLwOSRCXsoRDYFIf75uq8OEwK-S7sIW_0PAn-ZJ/exec" method="POST" target="hidden_iframe">
+  <form id="orderForm" action="https://script.google.com/macros/s/YOUR_APPS_SCRIPT_EXEC_ID/exec" method="POST">
+    
+    <!-- Customer Details -->
+    <div class="form-group">
+      <label for="customerName">Name *</label>
+      <input type="text" id="customerName" name="name" required placeholder="John Doe">
+    </div>
 
     <div class="form-group">
-      <label>Your Name</label>
-      <input type="text" id="customerName" name="customerName" required>
+      <label for="customerPhone">Phone *</label>
+      <input type="tel" id="customerPhone" name="phone" required placeholder="0412 345 678">
     </div>
 
-    <div style="display: flex; gap: 10px;">
-      <div class="form-group" style="flex: 1;">
-        <label>Date</label>
-        <input type="date" id="pickupDate" name="pickupDate" onchange="updateFormattedDate()" required>
-        <div id="formattedDateDisplay" class="formatted-date-label"></div>
-      </div>
-      <div class="form-group" style="flex: 1;">
-        <label>Time</label>
-        <input type="time" id="pickupTime" name="pickupTime" required>
-      </div>
+    <div class="form-group">
+      <label for="pickupTime">Pickup Time *</label>
+      <input type="time" id="pickupTime" name="pickupTime" required>
     </div>
-
-    <button type="button" class="cal-btn" onclick="addToCalendar()">📅 Add Pickup to Device Calendar</button>
 
     <div class="divider"></div>
 
+    <!-- Item Selection -->
+    <h3>Select Items</h3>
+    
     <div class="form-group">
-      <label>Drink</label>
-      <select id="drinkSelect" onchange="populateVariants()"></select>
+      <label for="itemSelect">Drink / Item</label>
+      <select id="itemSelect" onchange="renderItemVariants()">
+        <option value="">Loading items from Loyverse...</option>
+      </select>
     </div>
 
     <div class="form-group">
-      <label>Size / Type</label>
-      <select id="variantSelect"></select>
+      <label>Variants & Options</label>
+      <div id="variantsContainer" class="variants-box">
+        <span class="status-msg">Select an item above to view its options.</span>
+      </div>
     </div>
 
     <div class="form-group">
-      <label>Milk / Sugar / Options</label>
-      <input type="text" id="modifiersContainer" placeholder="e.g. Oat milk, 1 sugar, extra hot">
+      <label for="quantityInput">Quantity</label>
+      <input type="number" id="quantityInput" value="1" min="1" max="20">
     </div>
 
-    <button type="button" class="btn-add" onclick="addToCart()">+ Add Drink to Order</button>
+    <button type="button" class="btn btn-add" onclick="addToCart()">+ Add to Order</button>
 
     <div class="divider"></div>
 
-    <h3 style="margin-top:0; font-size: 16px;">Order Summary</h3>
-    <div id="cart-summary">Cart is empty.</div>
-    <input type="hidden" id="cartData" name="cartData">
+    <!-- Cart / Order Summary -->
+    <h3>Order Summary</h3>
+    <div id="cartSummary"><span class="status-msg">Cart is empty.</span></div>
+    
+    <!-- Hidden input to submit JSON payload -->
+    <input type="hidden" id="cartData" name="cartData" value="[]">
 
-    <div class="form-group">
-      <label>Special Instructions</label>
-      <textarea id="notes" name="notes" rows="2" placeholder="Leave at counter..."></textarea>
+    <div class="form-group" style="margin-top: 16px;">
+      <label for="notes">Special Instructions</label>
+      <textarea id="notes" name="notes" rows="2" placeholder="e.g. Extra hot, leave at counter..."></textarea>
     </div>
 
-    <button type="submit" id="submit-btn" class="btn-submit" onclick="return validateOrder()">Submit Order</button>
+    <button type="submit" class="btn btn-submit" onclick="return validateOrder()">Submit Order</button>
   </form>
 </div>
 
 <script>
+  // Set your deployed Google Apps Script Web App URL here
+  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/YOUR_APPS_SCRIPT_EXEC_ID/exec";
+
+  let loyverseItems = [];
   let cart = [];
-  let submitted = false;
-  
-  const items = [
-    { name: "Espresso", variants: [{ option_name: "Standard", price: 3.50 }] },
-    { name: "Flat White", variants: [{ option_name: "Small", price: 4.50 }, { option_name: "Large", price: 5.50 }] },
-    { name: "Cappuccino", variants: [{ option_name: "Small", price: 4.50 }, { option_name: "Large", price: 5.50 }] },
-    { name: "Latte", variants: [{ option_name: "Small", price: 4.50 }, { option_name: "Large", price: 5.50 }] },
-    { name: "English Breakfast Tea", variants: [{ option_name: "Standard", price: 4.00 }] },
-    { name: "Iced Latte", variants: [{ option_name: "Large", price: 6.00 }] }
-  ];
 
-  function fetchMenu() {
-    const drinkSelect = document.getElementById('drinkSelect');
-    items.forEach((item, index) => {
-      let opt = document.createElement('option');
-      opt.value = index;
-      opt.textContent = item.name;
-      drinkSelect.appendChild(opt);
-    });
-    populateVariants();
-  }
-
-  function populateVariants() {
-    const variantSelect = document.getElementById('variantSelect');
-    variantSelect.innerHTML = "";
-    const selectedIndex = document.getElementById('drinkSelect').value;
-    const item = items[selectedIndex];
-
-    if (item.variants && item.variants.length > 0) {
-      variantSelect.disabled = false;
-      let defaultSelectIndex = 0;
-
-      item.variants.forEach((v, idx) => {
-        const opt = document.createElement("option");
-        opt.value = v.option_name;
-        opt.dataset.price = v.price;
-        
-        let labelName = v.option_name;
-        if (v.option_name.toLowerCase().includes("small") || v.price === 4.50) {
-          labelName = "Small (8oz)";
-        } else if (v.option_name.toLowerCase().includes("large") || v.price === 5.50 || v.price === 6) {
-          labelName = "Large (12oz)";
-          defaultSelectIndex = idx;
-        }
-        
-        opt.textContent = `${labelName} ($${v.price.toFixed(2)})`;
-        variantSelect.appendChild(opt);
-      });
-      variantSelect.selectedIndex = defaultSelectIndex;
-    } else {
-      variantSelect.disabled = true;
-    }
-  }
-
-  function updateFormattedDate() {
-    const val = document.getElementById('pickupDate').value;
-    const display = document.getElementById('formattedDateDisplay');
-    if (!val) { display.innerText = ''; return; }
-    
-    const parts = val.split('-');
-    const date = new Date(parts[0], parts[1] - 1, parts[2]);
-    
-    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-    
-    const dayName = dayNames[date.getDay()];
-    const monthName = monthNames[date.getMonth()];
-    const dayNum = date.getDate();
-    
-    function getOrdinal(n) {
-      if (n > 3 && n < 21) return 'th';
-      switch (n % 10) {
-        case 1:  return "st";
-        case 2:  return "nd";
-        case 3:  return "rd";
-        default: return "th";
+  // Fetch items strictly from Loyverse endpoint
+  async function fetchMenu() {
+    const itemSelect = document.getElementById('itemSelect');
+    try {
+      const response = await fetch(APPS_SCRIPT_URL);
+      const data = await response.json();
+      loyverseItems = (data && data.items) ? data.items : [];
+      
+      if (loyverseItems.length === 0) {
+        itemSelect.innerHTML = '<option value="">No items found in Loyverse</option>';
+        return;
       }
+      populateItemDropdown();
+    } catch (e) {
+      console.error("Failed to fetch Loyverse items:", e);
+      itemSelect.innerHTML = '<option value="">Error loading items from Loyverse</option>';
     }
-    display.innerText = `${dayName} ${dayNum}${getOrdinal(dayNum)} ${monthName}`;
   }
 
-  function addToCalendar() {
-    const pDate = document.getElementById('pickupDate').value;
-    const pTime = document.getElementById('pickupTime').value || '08:00';
+  function populateItemDropdown() {
+    const itemSelect = document.getElementById('itemSelect');
+    itemSelect.innerHTML = '<option value="">-- Select Item --</option>';
     
-    if (!pDate) {
-      alert("Please select a date first.");
+    loyverseItems.forEach((item, index) => {
+      const opt = document.createElement('option');
+      opt.value = index;
+      opt.textContent = item.item_name || 'Unnamed Item';
+      itemSelect.appendChild(opt);
+    });
+  }
+
+  // Render options directly from the Loyverse item's variants array
+  function renderItemVariants() {
+    const itemIndex = document.getElementById('itemSelect').value;
+    const container = document.getElementById('variantsContainer');
+    container.innerHTML = '';
+
+    if (itemIndex === "") {
+      container.innerHTML = '<span class="status-msg">Select an item above to view its options.</span>';
       return;
     }
 
-    const cleanDate = pDate.replace(/-/g, '');
-    const cleanTime = pTime.replace(':', '') + '00';
-    const startIso = `${cleanDate}T${cleanTime}`;
+    const item = loyverseItems[itemIndex];
 
-    const icsContent = [
-      'BEGIN:VCALENDAR',
-      'VERSION:2.0',
-      'PRODID:-//Coffee Express//Order Pickup//EN',
-      'BEGIN:VEVENT',
-      `SUMMARY:☕ Coffee Express Pickup`,
-      `DESCRIPTION:Coffee order pickup for ${document.getElementById('customerName').value || 'Customer'}`,
-      `DTSTART:${startIso}`,
-      `DTEND:${startIso}`,
-      'END:VEVENT',
-      'END:VCALENDAR'
-    ].join('\r\n');
+    if (item && item.variants && item.variants.length > 0) {
+      item.variants.forEach((v) => {
+        // Resolve variant name directly from Loyverse fields
+        let optionName = v.variant_name || '';
+        if (!optionName && v.option_values && v.option_values.length > 0) {
+          optionName = v.option_values.map(ov => ov.value).join(' / ');
+        }
+        if (!optionName) optionName = "Option";
 
-    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
-    const link = document.createElement('a');
-    link.href = window.URL.createObjectURL(blob);
-    link.setAttribute('download', 'coffee-pickup.ics');
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+        const price = (v.default_price !== undefined && v.default_price !== null) 
+          ? parseFloat(v.default_price) 
+          : 0;
+
+        const label = document.createElement('label');
+        label.className = 'variant-label';
+        label.innerHTML = `
+          <input type="checkbox" class="variant-checkbox" value="${optionName}" data-price="${price}">
+          <span>${optionName} ($${price.toFixed(2)})</span>
+        `;
+        container.appendChild(label);
+      });
+    } else {
+      container.innerHTML = '<span class="status-msg">No variants available for this item.</span>';
+    }
   }
 
+  // Add selected item + options directly into cart
   function addToCart() {
-    const drinkIdx = document.getElementById('drinkSelect').value;
-    const drinkName = items[drinkIdx].name;
-    const variantSelect = document.getElementById('variantSelect');
-    const variantName = variantSelect.options[variantSelect.selectedIndex].text;
-    const price = parseFloat(variantSelect.options[variantSelect.selectedIndex].dataset.price);
-    const mods = document.getElementById('modifiersContainer').value;
+    const itemIndex = document.getElementById('itemSelect').value;
+    if (itemIndex === "") {
+      alert("Please select an item first.");
+      return;
+    }
+
+    const item = loyverseItems[itemIndex];
+    const qty = parseInt(document.getElementById('quantityInput').value) || 1;
+
+    let selectedVariants = [];
+    let totalPricePerUnit = 0;
+
+    const checkedBoxes = document.querySelectorAll('.variant-checkbox:checked');
+    
+    checkedBoxes.forEach(cb => {
+      selectedVariants.push(cb.value);
+      totalPricePerUnit += parseFloat(cb.dataset.price) || 0;
+    });
+
+    // If no option is checked, default to base variant price from Loyverse
+    if (checkedBoxes.length === 0 && item.variants && item.variants[0]) {
+      totalPricePerUnit = parseFloat(item.variants[0].default_price) || 0;
+    }
+
+    const itemTotal = totalPricePerUnit * qty;
 
     cart.push({
       id: Date.now(),
-      drink: drinkName,
-      variant: variantName,
-      price: price,
-      quantity: 1,
-      customizations: mods
+      name: item.item_name,
+      variants: selectedVariants.length > 0 ? selectedVariants.join(', ') : 'Standard',
+      quantity: qty,
+      unitPrice: totalPricePerUnit,
+      totalPrice: itemTotal
     });
 
-    document.getElementById('modifiersContainer').value = "";
+    // Reset fields
+    document.getElementById('itemSelect').value = "";
+    document.getElementById('quantityInput').value = 1;
+    renderItemVariants();
     renderCart();
   }
 
-  function renderCart() {
-    const summary = document.getElementById('cart-summary');
-    const hiddenData = document.getElementById('cartData');
-    
-    if (cart.length === 0) {
-      summary.innerHTML = "Cart is empty.";
-      hiddenData.value = "[]";
-      return;
-    }
-
-    summary.innerHTML = cart.map((item, index) => `
-      <div class="cart-item">
-        <div>
-          <strong>${item.drink}</strong><br>
-          <small style="color:#94a3b8">${item.variant} ${item.customizations ? '| ' + item.customizations : ''}</small>
-        </div>
-        <div>
-          <span style="color:#14b8a6; font-weight:bold; margin-right:10px;">$${item.price.toFixed(2)}</span>
-          <button type="button" class="remove-btn" onclick="removeItem(${index})">✕</button>
-        </div>
-      </div>
-    `).join("");
-
-    hiddenData.value = JSON.stringify(cart);
-  }
-
+  // Remove item from cart array
   function removeItem(index) {
     cart.splice(index, 1);
     renderCart();
   }
 
-  function checkSavedCustomerData() {
-    const savedName = localStorage.getItem('coffee_customer_name');
-    const savedTime = localStorage.getItem('coffee_preferred_time');
-    const savedCart = localStorage.getItem('coffee_last_cart');
+  // Render cart list and sync hidden input value
+  function renderCart() {
+    const cartSummary = document.getElementById('cartSummary');
+    const cartDataInput = document.getElementById('cartData');
 
-    if (savedName) document.getElementById('customerName').value = savedName;
-    if (savedTime) document.getElementById('pickupTime').value = savedTime;
-
-    if (savedCart) {
-      try {
-        const parsedCart = JSON.parse(savedCart);
-        if (parsedCart.length > 0) {
-          const summaryText = parsedCart.map(i => `${i.quantity}x ${i.drink}`).join(', ');
-          document.getElementById('reorderSummary').innerHTML = `☕ <strong>Welcome back!</strong> Quick reorder: <em>${summaryText}</em>`;
-          document.getElementById('reorderBanner').style.display = 'block';
-        }
-      } catch (e) {}
+    if (cart.length === 0) {
+      cartSummary.innerHTML = '<span class="status-msg">Cart is empty.</span>';
+      cartDataInput.value = "[]";
+      return;
     }
-  }
 
-  function loadPreviousOrder() {
-    const savedCart = localStorage.getItem('coffee_last_cart');
-    if (savedCart) {
-      try {
-        cart = JSON.parse(savedCart);
-        cart.forEach(item => item.id = Date.now() + Math.random());
-        renderCart();
-      } catch (e) {}
-    }
+    let grandTotal = 0;
+    cartSummary.innerHTML = cart.map((item, idx) => {
+      grandTotal += item.totalPrice;
+      return `
+        <div class="cart-item">
+          <div class="cart-item-details">
+            <span class="cart-item-title">${item.quantity}x ${item.name}</span>
+            <span class="cart-item-sub">${item.variants}</span>
+          </div>
+          <div class="cart-item-right">
+            <span class="cart-item-price">$${item.totalPrice.toFixed(2)}</span>
+            <button type="button" class="btn-remove" onclick="removeItem(${idx})" title="Remove Item">✕</button>
+          </div>
+        </div>
+      `;
+    }).join('') + `
+      <div class="cart-total">
+        <span>Total:</span>
+        <span style="color: var(--accent-color);">$${grandTotal.toFixed(2)}</span>
+      </div>
+    `;
+
+    cartDataInput.value = JSON.stringify(cart);
   }
 
   function validateOrder() {
     if (cart.length === 0) {
-      alert("Please add at least one item to your order before placing it.");
+      alert("Your cart is empty! Please add at least one item before submitting.");
       return false;
     }
-
-    const customer = document.getElementById("customerName").value;
-    const time = document.getElementById("pickupTime").value;
-
-    if (customer) localStorage.setItem('coffee_customer_name', customer);
-    if (time) localStorage.setItem('coffee_preferred_time', time);
-    if (cart.length > 0) localStorage.setItem('coffee_last_cart', JSON.stringify(cart));
-
-    submitted = true;
-    const btn = document.getElementById("submit-btn");
-    btn.disabled = true;
-    btn.innerText = "Submitting Order...";
     return true;
   }
 
-  function completeSubmission() {
-    alert("Order Submitted Successfully!");
-    document.getElementById("order-form").reset();
-    cart = [];
-    renderCart();
-    
-    document.getElementById('pickupDate').valueAsDate = new Date();
-    updateFormattedDate();
-    checkSavedCustomerData();
-
-    const btn = document.getElementById("submit-btn");
-    btn.disabled = false;
-    btn.innerText = "Submit Order";
-  }
-
-  // Initialization
-  document.getElementById('pickupDate').valueAsDate = new Date();
-  updateFormattedDate();
-  fetchMenu();
-  checkSavedCustomerData();
+  window.addEventListener('DOMContentLoaded', fetchMenu);
 </script>
 
 </body>
