@@ -1,570 +1,870 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Coffee Express - Order</title>
-  <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 15px; background: #0f172a; color: #f8fafc; }
-    .card { background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-bottom: 20px; border: 1px solid #334155; }
-    .form-group { margin-bottom: 15px; }
-    label { display: block; font-weight: 600; margin-bottom: 6px; color: #cbd5e1; }
-    select, input[type="date"], input[type="text"], input[type="number"], textarea, button { width: 100%; padding: 12px; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #f8fafc; font-size: 14px; box-sizing: border-box; }
-    textarea { resize: vertical; min-height: 70px; }
-    button { background: #2563eb; color: #ffffff; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; border-radius: 8px; }
-    button:hover { background: #1d4ed8; }
-    button:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
-    
-    .modifier-group { margin: 12px 0; padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; }
-    .modifier-group strong { display: block; margin-bottom: 8px; color: #38bdf8; font-size: 14px; }
-    .modifier-options-list { display: flex; flex-direction: column; gap: 8px; }
-    .modifier-options-list label { font-weight: normal; display: flex; align-items: center; gap: 10px; cursor: pointer; color: #e2e8f0; margin: 0; }
-    .modifier-checkbox { width: 18px; height: 18px; accent-color: #2563eb; cursor: pointer; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coffee Express - Order</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#c2410c">
+<link rel="icon" href="icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Coffee Express">
+<style>
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 15px; background: #0f172a; color: #f8fafc; }
+.card { background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-bottom: 20px; border: 1px solid #334155; }
+.form-group { margin-bottom: 15px; }
+label { display: block; font-weight: 600; margin-bottom: 6px; color: #cbd5e1; }
+select, input[type="date"], input[type="text"], input[type="number"], textarea, button { width: 100%; padding: 12px; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #f8fafc; font-size: 14px; box-sizing: border-box; }
+textarea { resize: vertical; min-height: 70px; }
+button { background: #2563eb; color: #ffffff; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; border-radius: 8px; }
+button:hover { background: #1d4ed8; }
+button:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
 
-    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #334155; }
-    .status-msg { padding: 12px; border-radius: 8px; margin-top: 15px; display: none; }
-    .status-msg.success { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; display: block; }
-    .status-msg.error { background: #7f1d1d; color: #fca5a5; border: 1px solid #dc2626; display: block; }
-    
-    .calendar-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
-    .calendar-btn { background: #059669; font-size: 14px; padding: 12px; }
-    .calendar-btn:hover { background: #047857; }
-    .ics-btn { background: #4f46e5; font-size: 14px; padding: 12px; }
-    .ics-btn:hover { background: #4338ca; }
-  </style>
+.modifier-group { margin: 12px 0; padding: 12px; background: #0f172a; border-radius: 8px; border: 1px solid #334155; }
+.modifier-group strong { display: block; margin-bottom: 8px; color: #38bdf8; font-size: 14px; }
+.modifier-options-list { display: flex; flex-direction: column; gap: 8px; }
+.modifier-options-list label { font-weight: normal; display: flex; align-items: center; gap: 10px; cursor: pointer; color: #e2e8f0; margin: 0; }
+.modifier-checkbox { width: 18px; height: 18px; accent-color: #2563eb; cursor: pointer; }
+
+.cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #334155; }
+.status-msg { padding: 12px; border-radius: 8px; margin-top: 15px; display: none; }
+.status-msg.success { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; display: block; }
+.status-msg.error { background: #7f1d1d; color: #fca5a5; border: 1px solid #dc2626; display: block; }
+
+.calendar-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
+.calendar-btn { background: #059669; font-size: 14px; padding: 12px; }
+.calendar-btn:hover { background: #047857; }
+.ics-btn { background: #4f46e5; font-size: 14px; padding: 12px; }
+.ics-btn:hover { background: #4338ca; }
+
+.app-header { display: flex; align-items: center; gap: 12px; margin-bottom: 10px; }
+.brand-logo { width: 48px; height: 48px; object-fit: contain; border-radius: 8px; background: #fff; padding: 4px; flex-shrink: 0; }
+.app-header-text h2 { margin: 0; font-size: 20px; }
+.tagline { color: #94a3b8; font-size: 12px; }
+
+.install-card { margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155; }
+.install-btn { background: #c2410c; }
+.install-btn:hover { background: #9a3412; }
+#iosInstallHint { font-size: 12px; color: #94a3b8; margin-top: 8px; }
+
+.reorder-card { margin-top: 12px; padding-top: 12px; border-top: 1px solid #334155; }
+.reorder-btn { background: #0891b2; }
+.reorder-btn:hover { background: #0e7490; }
+.reorder-summary { font-size: 12px; color: #94a3b8; margin-top: 8px; }
+
+.qr-card { text-align: center; }
+.qr-image { width: 170px; height: 170px; background: #fff; border-radius: 8px; padding: 8px; margin-top: 10px; }
+.qr-card p { font-size: 13px; color: #94a3b8; }
+
+.charity-card { display: flex; align-items: center; gap: 12px; }
+.charity-logo { width: 60px; height: auto; background: #fff; border-radius: 6px; padding: 4px; flex-shrink: 0; }
+.charity-card span { font-size: 13px; color: #cbd5e1; }
+</style>
 </head>
 <body>
 
-  <div class="card">
-    <h2>☕ Coffee Express Order</h2>
-    
-    <form id="order-form" onsubmit="handleOrderSubmit(event)">
-      <div class="form-group">
-        <label for="customerName">Your Name</label>
-        <input type="text" id="customerName" name="customerName" placeholder="Enter your name" required>
-      </div>
+<div class="card">
+<div class="app-header">
+<img src="GEM_placeHolder_logo_V22.png" alt="Gemco" class="brand-logo">
+<div class="app-header-text">
+<h2>&#9749; Coffee Express Order</h2>
+<span class="tagline">Order ahead. Skip the queue.</span>
+</div>
+</div>
 
-      <div class="form-group">
-        <label for="categorySelect">Category</label>
-        <select id="categorySelect" onchange="onCategoryChange()" required>
-          <option value="">Loading categories...</option>
-        </select>
-      </div>
+<div id="installArea" class="install-card" style="display:none;">
+<button type="button" id="installBtn" onclick="triggerInstall()" class="install-btn">&#128242; Install App to Your Device</button>
+<p id="iosInstallHint" style="display:none;">On iPhone/iPad: tap the Share icon, then "Add to Home Screen".</p>
+</div>
 
-      <div class="form-group">
-        <label for="itemSelect">Drink Item</label>
-        <select id="itemSelect" onchange="onItemChange()" required disabled>
-          <option value="">Select a Category First...</option>
-        </select>
-      </div>
+<div id="reorderArea" class="reorder-card" style="display:none;">
+<button type="button" id="reorderBtn" onclick="reorderLastOrder()" class="reorder-btn">&#128257; Reorder Last Order</button>
+<div id="reorderSummary" class="reorder-summary"></div>
+</div>
+</div>
 
-      <div class="form-group">
-        <label for="variantSelect">Variant / Size</label>
-        <select id="variantSelect" required disabled>
-          <option value="">Select an Item First...</option>
-        </select>
-      </div>
+<div class="card">
+<form id="order-form" onsubmit="handleOrderSubmit(event)">
+<div class="form-group">
+<label for="customerName">Your Name</label>
+<input type="text" id="customerName" name="customerName" placeholder="Enter your name" required>
+</div>
 
-      <div class="form-group">
-        <label>Customizations / Add-ons</label>
-        <div id="modifiersContainer"><i>Select an item to view add-ons</i></div>
-      </div>
+<div class="form-group">
+<label for="categorySelect">Category</label>
+<select id="categorySelect" onchange="onCategoryChange()" required>
+<option value="">Loading categories...</option>
+</select>
+</div>
 
-      <div class="form-group">
-        <label for="itemQuantity">Quantity</label>
-        <input type="number" id="itemQuantity" min="1" max="20" value="1" required>
-      </div>
+<div class="form-group">
+<label for="itemSelect">Drink Item</label>
+<select id="itemSelect" onchange="onItemChange()" required disabled>
+<option value="">Select a Category First...</option>
+</select>
+</div>
 
-      <button type="button" id="add-to-cart-btn" onclick="addToCart()" disabled>Add Item to Order</button>
+<div class="form-group">
+<label for="variantSelect">Variant / Size</label>
+<select id="variantSelect" required disabled>
+<option value="">Select an Item First...</option>
+</select>
+</div>
 
-      <hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
+<div class="form-group">
+<label>Customizations / Add-ons</label>
+<div id="modifiersContainer"><i>Select an item to view add-ons</i></div>
+</div>
 
-      <div class="form-group">
-        <label for="pickupDate">Pickup Date (Tuesdays & Thursdays Only)</label>
-        <input type="date" id="pickupDate" name="pickupDate" required>
-      </div>
+<div class="form-group">
+<label for="itemQuantity">Quantity</label>
+<input type="number" id="itemQuantity" min="1" max="20" value="1" required>
+</div>
 
-      <div class="form-group">
-        <label for="pickupTime">Pickup Time (8:00 AM – 11:00 AM)</label>
-        <select id="pickupTime" name="pickupTime" required></select>
-      </div>
+<button type="button" id="add-to-cart-btn" onclick="addToCart()" disabled>Add Item to Order</button>
 
-      <div class="form-group">
-        <label for="specialInstructions">Special Instructions</label>
-        <textarea id="specialInstructions" placeholder="e.g. Extra hot, extra shot..."></textarea>
-      </div>
-    </form>
-  </div>
+<hr style="border: 0; border-top: 1px solid #334155; margin: 20px 0;">
 
-  <div class="card">
-    <h3 style="margin-top:0;">Order Summary</h3>
-    <div id="cartList"><i>No items added yet.</i></div>
-    <div style="margin-top: 15px; font-weight: bold; font-size: 16px;">
-      Grand Total: $<span id="cartTotal">0.00</span>
-    </div>
-    <button type="submit" form="order-form" id="submit-btn" style="margin-top: 15px;">Place Order</button>
+<div class="form-group">
+<label for="pickupDate">Pickup Date (Tuesdays & Thursdays Only)</label>
+<input type="date" id="pickupDate" name="pickupDate" required>
+</div>
 
-    <div id="status" class="status-msg"></div>
-    <div id="calendarArea" style="display: none;">
-      <div class="calendar-actions">
-        <button type="button" class="calendar-btn" onclick="addToGoogleCalendar()">📅 Add Pickup to Google Calendar</button>
-        <button type="button" class="ics-btn" onclick="downloadICSFile()">⏰ Download Reminder (.ics file)</button>
-      </div>
-    </div>
-  </div>
+<div class="form-group">
+<label for="pickupTime">Pickup Time (8:00 AM - 11:00 AM, 5 min slots)</label>
+<select id="pickupTime" name="pickupTime" required></select>
+</div>
+
+<div class="form-group">
+<label for="specialInstructions">Special Instructions</label>
+<textarea id="specialInstructions" placeholder="e.g. Extra hot, extra shot..."></textarea>
+</div>
+</form>
+</div>
+
+<div class="card">
+<h3 style="margin-top:0;">Order Summary</h3>
+<div id="cartList"><i>No items added yet.</i></div>
+<div style="margin-top: 15px; font-weight: bold; font-size: 16px;">
+Grand Total: $<span id="cartTotal">0.00</span>
+</div>
+<button type="submit" form="order-form" id="submit-btn" style="margin-top: 15px;">Place Order</button>
+
+<div id="status" class="status-msg"></div>
+<div id="calendarArea" style="display: none;">
+<div class="calendar-actions">
+<button type="button" class="calendar-btn" onclick="addToGoogleCalendar()">&#128197; Add Pickup to Google Calendar</button>
+<button type="button" class="ics-btn" onclick="downloadICSFile()">&#9200; Download Reminder (.ics file)</button>
+</div>
+</div>
+</div>
+
+<div class="card qr-card">
+<h3 style="margin-top:0;">&#128241; Get the App on Your Phone</h3>
+<p>Scan this QR code, or tap our NFC point-of-sale sign, to open Coffee Express and add it to your home screen for fast reordering next time.</p>
+<img id="qrCodeImg" alt="QR code to install Coffee Express" class="qr-image">
+</div>
+
+<div class="card charity-card">
+<img src="ACNC-Registered-Charity-Logo_RGB.png" alt="ACNC Registered Charity" class="charity-logo">
+<span>Proud to support our community as an ACNC Registered Charity.</span>
+</div>
 
 <script>
-  const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQQCDOBJMU2YEXtekiww-12uXuoZLwOSRCXsoRDYFIf75uq8OEwK-S7sIW_0PAn-ZJ/exec";
 
-  let menuData = { categories: [], items: [], modifiers: [] };
-  let cart = [];
-  let lastOrderDetails = null;
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQQCDOBJMU2YEXtekiww-12uXuoZLwOSRCXsoRDYFIf75uq8OEwK-S7sIW_0PAn-ZJ/exec";
 
-  document.addEventListener("DOMContentLoaded", function() {
-    initializeDatePicker();
-    populatePickupTimes();
-    fetchMenuData();
+var menuData = { categories: [], items: [], modifiers: [] };
+var cart = [];
+var lastOrderDetails = null;
+var deferredInstallPrompt = null;
+var LOCAL_MENU = buildLocalMenu();
+
+function buildLocalMenu() {
+  function mkItem(id, categoryId, name) {
+    return {
+      id: id,
+      category_id: categoryId,
+      name: name,
+      modifier_ids: ["mod-milk"],
+      variants: [
+        { variant_id: id + "-s", option1_value: "Small (8oz)", default_price: 5 },
+        { variant_id: id + "-l", option1_value: "Large (12oz)", default_price: 6 }
+      ]
+    };
+  }
+  return {
+    items: [
+      mkItem("hot-flatwhite", "hot", "Flat White"),
+      mkItem("hot-cappuccino", "hot", "Cappuccino"),
+      mkItem("hot-latte", "hot", "Caffe Latte"),
+      mkItem("hot-longblack", "hot", "Long Black"),
+      mkItem("hot-mocha", "hot", "Mocha"),
+      mkItem("hot-hotchoc", "hot", "Hot Chocolate"),
+      mkItem("cold-icedlatte", "cold", "Iced Latte"),
+      mkItem("cold-icedlongblack", "cold", "Iced Long Black"),
+      mkItem("cold-coldbrew", "cold", "Cold Brew"),
+      mkItem("cold-icedmocha", "cold", "Iced Mocha"),
+      mkItem("cold-icedchoc", "cold", "Iced Chocolate"),
+      mkItem("cold-lemonade", "cold", "Sparkling Lemonade"),
+      mkItem("tea-english", "tea", "English Breakfast Tea"),
+      mkItem("tea-green", "tea", "Green Tea"),
+      mkItem("tea-chai", "tea", "Chai Latte"),
+      mkItem("tea-peppermint", "tea", "Peppermint Tea"),
+      mkItem("tea-earlgrey", "tea", "Earl Grey"),
+      mkItem("tea-herbal", "tea", "Herbal Tea")
+    ],
+    modifiers: [
+      {
+        id: "mod-milk",
+        name: "Milk & Syrup",
+        modifier_options: [
+          { name: "Alternative Milk", price: 0.70 },
+          { name: "Add Syrup", price: 0.70 },
+          { name: "Extra Shot", price: 0.70 },
+          { name: "Extra Hot", price: 0 }
+        ]
+      }
+    ]
+  };
+}
+
+function classifyBucket(text) {
+  var t = (text || "").toLowerCase();
+  if (t.indexOf("tea") !== -1 || t.indexOf("chai") !== -1) return "tea";
+  if (t.indexOf("iced") !== -1 || t.indexOf("cold") !== -1 || t.indexOf("frapp") !== -1 || t.indexOf("lemonade") !== -1 || t.indexOf("soda") !== -1 || t.indexOf("juice") !== -1) return "cold";
+  if (t.indexOf("coffee") !== -1 || t.indexOf("latte") !== -1 || t.indexOf("cappuccino") !== -1 || t.indexOf("espresso") !== -1 || t.indexOf("mocha") !== -1 || t.indexOf("hot") !== -1 || t.indexOf("black") !== -1 || t.indexOf("flat white") !== -1 || t.indexOf("chocolate") !== -1) return "hot";
+  return null;
+}
+
+function buildFinalMenu(apiData) {
+  var buckets = { hot: [], cold: [], tea: [] };
+
+  if (apiData && Array.isArray(apiData.items) && apiData.items.length) {
+    var catNameById = {};
+    (apiData.categories || []).forEach(function(c) { catNameById[c.id] = c.name; });
+    apiData.items.forEach(function(item) {
+      var catName = catNameById[item.category_id] || "";
+      var bucket = classifyBucket(item.name + " " + catName);
+      if (bucket) buckets[bucket].push(item);
+    });
+  }
+
+  ["hot", "cold", "tea"].forEach(function(b) {
+    var localItems = LOCAL_MENU.items.filter(function(i) { return i.category_id === b; });
+    var existingNames = {};
+    buckets[b].forEach(function(i) { existingNames[(i.name || "").toLowerCase()] = true; });
+    localItems.forEach(function(li) {
+      if (!existingNames[li.name.toLowerCase()]) buckets[b].push(li);
+    });
   });
 
-  function initializeDatePicker() {
-    const dateInput = document.getElementById("pickupDate");
-    let target = new Date();
-
-    if ((target.getDay() === 2 || target.getDay() === 4) && target.getHours() >= 11) {
-      target.setDate(target.getDate() + 1);
-    }
-
-    while (target.getDay() !== 2 && target.getDay() !== 4) {
-      target.setDate(target.getDate() + 1);
-    }
-
-    const formatDateStr = d => {
-      const yyyy = d.getFullYear();
-      const mm = String(d.getMonth() + 1).padStart(2, '0');
-      const dd = String(d.getDate()).padStart(2, '0');
-      return `${yyyy}-${mm}-${dd}`;
-    };
-
-    dateInput.min = formatDateStr(new Date());
-    dateInput.value = formatDateStr(target);
-    dateInput.onchange = validatePickupDate;
-  }
-
-  function validatePickupDate() {
-    const dateInput = document.getElementById("pickupDate");
-    if (!dateInput.value) return;
-
-    const parts = dateInput.value.split("-");
-    const chosen = new Date(parts[0], parts[1] - 1, parts[2]);
-    const day = chosen.getDay();
-
-    if (day !== 2 && day !== 4) {
-      alert("⚠️ Pickup is available on Tuesdays and Thursdays only.");
-      initializeDatePicker();
-    }
-  }
-
-  function populatePickupTimes() {
-    const timeSelect = document.getElementById("pickupTime");
-    timeSelect.innerHTML = '<option value="">-- Select Pickup Time --</option>';
-    
-    for (let hour = 8; hour <= 11; hour++) {
-      let maxMin = (hour === 11) ? 0 : 45;
-      for (let min = 0; min <= maxMin; min += 15) {
-        let period = hour >= 12 ? "PM" : "AM";
-        let displayHour = hour > 12 ? hour - 12 : hour;
-        let displayMin = min < 10 ? "0" + min : min;
-        let timeVal = `${displayHour}:${displayMin} ${period}`;
-        
-        const opt = document.createElement("option");
-        opt.value = timeVal;
-        opt.textContent = timeVal;
-        timeSelect.appendChild(opt);
-      }
-    }
-  }
-
-  function fetchMenuData() {
-    const script = document.createElement('script');
-    script.id = 'jsonp-menu-script';
-    script.src = `${APPS_SCRIPT_URL}?callback=handleMenuResponse`;
-    
-    const timeout = setTimeout(() => {
-      if (!menuData.categories || menuData.categories.length === 0) {
-        showStatus("Menu connection timed out. Please refresh or verify Google Apps Script deployment access.", false);
-        document.getElementById("categorySelect").innerHTML = '<option value="">Failed to load menu</option>';
-      }
-    }, 10000);
-
-    window.handleMenuResponse = function(data) {
-      clearTimeout(timeout);
-      if (data.status === "error") {
-        showStatus("Error loading menu: " + data.message, false);
-        return;
-      }
-      menuData = data;
-      populateCategories();
-    };
-
-    document.body.appendChild(script);
-  }
-
-  function populateCategories() {
-    const catSelect = document.getElementById("categorySelect");
-    catSelect.innerHTML = '<option value="">Select a Category...</option>';
-
-    if (!menuData.categories || menuData.categories.length === 0) {
-      catSelect.innerHTML = '<option value="">No Categories Available</option>';
-      return;
-    }
-
-    menuData.categories.forEach(cat => {
-      const opt = document.createElement("option");
-      opt.value = cat.id;
-      opt.textContent = cat.name;
-      catSelect.appendChild(opt);
+  var finalItems = [];
+  ["hot", "cold", "tea"].forEach(function(b) {
+    buckets[b].forEach(function(i) {
+      i.category_id = b;
+      finalItems.push(i);
     });
+  });
+
+  var finalCategories = [
+    { id: "hot", name: "☕ Hot Drinks" },
+    { id: "cold", name: "🧊 Cold Drinks" },
+    { id: "tea", name: "🍵 Tea" }
+  ];
+
+  var finalModifiers = LOCAL_MENU.modifiers;
+  if (apiData && apiData.modifiers && apiData.modifiers.length) {
+    finalModifiers = apiData.modifiers.concat(LOCAL_MENU.modifiers);
   }
 
-  function onCategoryChange() {
-    const catId = document.getElementById("categorySelect").value;
-    const itemSelect = document.getElementById("itemSelect");
-    
-    itemSelect.innerHTML = '<option value="">-- Select Drink --</option>';
-    resetVariantAndModifiers();
+  return { categories: finalCategories, items: finalItems, modifiers: finalModifiers };
+}
 
-    if (!catId) {
-      itemSelect.disabled = true;
-      return;
-    }
+document.addEventListener("DOMContentLoaded", function() {
+  initializeDatePicker();
+  populatePickupTimes();
+  fetchMenuData();
+  prefillCustomerName();
+  loadLastOrderUI();
+  setupInstallPrompt();
+  setupQrCode();
+  registerServiceWorker();
+});
 
-    // Filter items matching the category ID
-    let filteredItems = menuData.items.filter(item => 
-      String(item.category_id || "").trim() === String(catId).trim()
-    );
+function formatDateStr(d) {
+  var yyyy = d.getFullYear();
+  var mm = String(d.getMonth() + 1).padStart(2, "0");
+  var dd = String(d.getDate()).padStart(2, "0");
+  return yyyy + "-" + mm + "-" + dd;
+}
 
-    // Fallback: If Loyverse items have unassigned or mismatched category IDs, show all drinks
-    if (filteredItems.length === 0 && menuData.items.length > 0) {
-      console.warn("No direct category match for ID " + catId + ". Displaying all available drinks.");
-      filteredItems = menuData.items;
-    }
+function initializeDatePicker() {
+  var dateInput = document.getElementById("pickupDate");
+  var target = new Date();
 
-    if (filteredItems.length === 0) {
-      itemSelect.innerHTML = '<option value="">No drinks available</option>';
-      itemSelect.disabled = true;
-      return;
-    }
-
-    filteredItems.forEach(item => {
-      const opt = document.createElement("option");
-      opt.value = item.id;
-      opt.textContent = item.name;
-      itemSelect.appendChild(opt);
-    });
-
-    itemSelect.disabled = false;
+  if ((target.getDay() === 2 || target.getDay() === 4) && target.getHours() >= 11) {
+    target.setDate(target.getDate() + 1);
   }
 
-  function onItemChange() {
-    const itemId = document.getElementById("itemSelect").value;
-    const variantSelect = document.getElementById("variantSelect");
-    const addToCartBtn = document.getElementById("add-to-cart-btn");
-
-    if (!itemId) {
-      resetVariantAndModifiers();
-      return;
-    }
-
-    const selectedItem = menuData.items.find(item => item.id === itemId);
-    if (!selectedItem) return;
-
-    variantSelect.innerHTML = "";
-    const variants = selectedItem.variants || [];
-
-    variants.forEach(v => {
-      const opt = document.createElement("option");
-      opt.value = v.variant_id || v.id;
-      
-      let price = (v.default_price !== undefined && v.default_price !== null) 
-        ? parseFloat(v.default_price)
-        : (v.stores && v.stores[0] ? parseFloat(v.stores[0].price) : 0);
-        
-      opt.dataset.price = price;
-      
-      let labelName = v.option1_value;
-      if (!labelName) {
-        if (price === 5 || (v.sku && v.sku.toLowerCase().includes("small"))) {
-          labelName = "Small (8oz)";
-        } else if (price === 6 || (v.sku && v.sku.toLowerCase().includes("large"))) {
-          labelName = "Large (12oz)";
-        } else {
-          labelName = variants.length === 1 ? "Standard" : "Regular";
-        }
-      }
-
-      opt.dataset.label = labelName;
-      opt.textContent = `${labelName} ($${price.toFixed(2)})`;
-      
-      variantSelect.appendChild(opt);
-    });
-
-    variantSelect.disabled = variants.length === 0;
-    populateModifiers(selectedItem);
-    addToCartBtn.disabled = false;
+  while (target.getDay() !== 2 && target.getDay() !== 4) {
+    target.setDate(target.getDate() + 1);
   }
 
-  function populateModifiers(item) {
-    const container = document.getElementById("modifiersContainer");
-    container.innerHTML = "";
+  dateInput.min = formatDateStr(new Date());
+  dateInput.value = formatDateStr(target);
+  dateInput.onchange = validatePickupDate;
+}
 
-    const itemModIds = item.modifier_ids || [];
-    if (itemModIds.length === 0 || !menuData.modifiers) {
-      container.innerHTML = "<i>No add-ons available for this drink.</i>";
-      return;
-    }
+function validatePickupDate() {
+  var dateInput = document.getElementById("pickupDate");
+  if (!dateInput.value) return;
 
-    const availableModifiers = menuData.modifiers.filter(m => itemModIds.includes(m.id));
+  var parts = dateInput.value.split("-");
+  var chosen = new Date(parts[0], parts[1] - 1, parts[2]);
+  var day = chosen.getDay();
 
-    if (availableModifiers.length === 0) {
-      container.innerHTML = "<i>No add-ons available.</i>";
-      return;
-    }
-
-    availableModifiers.forEach(mod => {
-      const groupDiv = document.createElement("div");
-      groupDiv.className = "modifier-group";
-
-      const title = document.createElement("strong");
-      title.textContent = mod.name;
-      groupDiv.appendChild(title);
-
-      const optionsList = document.createElement("div");
-      optionsList.className = "modifier-options-list";
-
-      const options = mod.modifier_options || mod.options || [];
-      options.forEach(opt => {
-        const label = document.createElement("label");
-        const checkbox = document.createElement("input");
-        checkbox.type = "checkbox";
-        checkbox.className = "modifier-checkbox";
-        checkbox.value = opt.name || opt.option_name;
-        
-        let optPrice = parseFloat(opt.price !== undefined ? opt.price : (opt.default_price || 0));
-        checkbox.dataset.price = optPrice;
-
-        let priceText = optPrice > 0 ? ` (+$${optPrice.toFixed(2)})` : "";
-        label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(` ${opt.name || opt.option_name}${priceText}`));
-
-        optionsList.appendChild(label);
-      });
-
-      groupDiv.appendChild(optionsList);
-      container.appendChild(groupDiv);
-    });
-  }
-
-  function resetVariantAndModifiers() {
-    const variantSelect = document.getElementById("variantSelect");
-    const container = document.getElementById("modifiersContainer");
-    const addToCartBtn = document.getElementById("add-to-cart-btn");
-
-    variantSelect.innerHTML = '<option value="">Select an Item First...</option>';
-    variantSelect.disabled = true;
-    container.innerHTML = "<i>Select an item to view add-ons</i>";
-    addToCartBtn.disabled = true;
-  }
-
-  function addToCart() {
-    const itemSelect = document.getElementById("itemSelect");
-    const variantSelect = document.getElementById("variantSelect");
-    const qtyInput = document.getElementById("itemQuantity");
-    
-    if (!itemSelect.value) return;
-
-    const itemId = itemSelect.value;
-    const itemObj = menuData.items.find(i => i.id === itemId);
-    const selectedVariantOpt = variantSelect.options[variantSelect.selectedIndex];
-
-    const variantName = selectedVariantOpt ? selectedVariantOpt.dataset.label : "Standard";
-    const variantPrice = selectedVariantOpt ? parseFloat(selectedVariantOpt.dataset.price || 0) : 0;
-    const qty = parseInt(qtyInput.value, 10) || 1;
-
-    let selectedMods = [];
-    let modPriceTotal = 0;
-
-    document.querySelectorAll(".modifier-checkbox:checked").forEach(cb => {
-      let modPrice = parseFloat(cb.dataset.price || 0);
-      selectedMods.push(cb.value);
-      modPriceTotal += modPrice;
-    });
-
-    const itemUnitPrice = variantPrice + modPriceTotal;
-
-    const cartItem = {
-      name: itemObj.name,
-      variant: variantName,
-      quantity: qty,
-      unitPrice: itemUnitPrice,
-      price: itemUnitPrice * qty,
-      modifiers: selectedMods
-    };
-
-    cart.push(cartItem);
-    renderCart();
-
-    document.querySelectorAll(".modifier-checkbox").forEach(cb => cb.checked = false);
-    qtyInput.value = 1;
-  }
-
-  function renderCart() {
-    const cartList = document.getElementById("cartList");
-    const cartTotal = document.getElementById("cartTotal");
-
-    if (cart.length === 0) {
-      cartList.innerHTML = "<i>No items added yet.</i>";
-      cartTotal.textContent = "0.00";
-      return;
-    }
-
-    cartList.innerHTML = "";
-    let total = 0;
-
-    cart.forEach((item, idx) => {
-      total += item.price;
-      const div = document.createElement("div");
-      div.className = "cart-item";
-      
-      let modText = item.modifiers.length > 0 ? `<br><small style="color:#94a3b8;">+ ${item.modifiers.join(", ")}</small>` : "";
-      
-      div.innerHTML = `
-        <div>
-          <strong>${item.quantity}x ${item.name}</strong> (${item.variant})${modText}
-        </div>
-        <div>
-          $${item.price.toFixed(2)} 
-          <button type="button" onclick="removeFromCart(${idx})" style="width:auto; padding: 4px 8px; margin-left: 8px; background: #ef4444;">✕</button>
-        </div>
-      `;
-      cartList.appendChild(div);
-    });
-
-    cartTotal.textContent = total.toFixed(2);
-  }
-
-  function removeFromCart(index) {
-    cart.splice(index, 1);
-    renderCart();
-  }
-
-  function handleOrderSubmit(e) {
-    e.preventDefault();
-    if (cart.length === 0) {
-      showStatus("Please add at least one item before placing your order.", false);
-      return;
-    }
-
-    const custName = document.getElementById("customerName").value;
-    const pDate = document.getElementById("pickupDate").value;
-    const pTime = document.getElementById("pickupTime").value;
-    const instructions = document.getElementById("specialInstructions").value;
-
-    if (!pTime) {
-      showStatus("Please select a valid pickup time.", false);
-      return;
-    }
-
-    lastOrderDetails = {
-      customerName: custName,
-      date: pDate,
-      time: pTime,
-      instructions: instructions,
-      items: [...cart],
-      total: document.getElementById("cartTotal").textContent
-    };
-
-    showStatus("✅ Order placed successfully! Payment is due on pickup.", true);
-    document.getElementById("calendarArea").style.display = "block";
-    
-    cart = [];
-    renderCart();
-    document.getElementById("order-form").reset();
+  if (day !== 2 && day !== 4) {
+    alert("Pickup is available on Tuesdays and Thursdays only.");
     initializeDatePicker();
-    populatePickupTimes();
+  }
+}
+
+function populatePickupTimes() {
+  var timeSelect = document.getElementById("pickupTime");
+  timeSelect.innerHTML = "";
+  var defaultOpt = document.createElement("option");
+  defaultOpt.value = "";
+  defaultOpt.textContent = "-- Select Pickup Time --";
+  timeSelect.appendChild(defaultOpt);
+
+  for (var hour = 8; hour <= 11; hour++) {
+    var maxMin = (hour === 11) ? 0 : 55;
+    for (var min = 0; min <= maxMin; min += 5) {
+      var period = hour >= 12 ? "PM" : "AM";
+      var displayHour = hour > 12 ? hour - 12 : hour;
+      var displayMin = min < 10 ? "0" + min : String(min);
+      var timeVal = displayHour + ":" + displayMin + " " + period;
+
+      var opt = document.createElement("option");
+      opt.value = timeVal;
+      opt.textContent = timeVal;
+      timeSelect.appendChild(opt);
+    }
+  }
+}
+
+function fetchMenuData() {
+  var script = document.createElement("script");
+  script.id = "jsonp-menu-script";
+  script.src = APPS_SCRIPT_URL + "?callback=handleMenuResponse";
+
+  var timeoutHandle = setTimeout(function() {
+    if (!menuData.categories || menuData.categories.length === 0) {
+      menuData = buildFinalMenu(null);
+      populateCategories();
+    }
+  }, 8000);
+
+  window.handleMenuResponse = function(data) {
+    clearTimeout(timeoutHandle);
+    if (data && data.status === "error") {
+      menuData = buildFinalMenu(null);
+      populateCategories();
+      return;
+    }
+    menuData = buildFinalMenu(data);
+    populateCategories();
+  };
+
+  document.body.appendChild(script);
+}
+
+function populateCategories() {
+  var catSelect = document.getElementById("categorySelect");
+  catSelect.innerHTML = "";
+  var defaultOpt = document.createElement("option");
+  defaultOpt.value = "";
+  defaultOpt.textContent = "Select a Category...";
+  catSelect.appendChild(defaultOpt);
+
+  menuData.categories.forEach(function(cat) {
+    var opt = document.createElement("option");
+    opt.value = cat.id;
+    opt.textContent = cat.name;
+    catSelect.appendChild(opt);
+  });
+}
+
+function onCategoryChange() {
+  var catId = document.getElementById("categorySelect").value;
+  var itemSelect = document.getElementById("itemSelect");
+
+  itemSelect.innerHTML = "";
+  var defOpt = document.createElement("option");
+  defOpt.value = "";
+  defOpt.textContent = "-- Select Drink --";
+  itemSelect.appendChild(defOpt);
+  resetVariantAndModifiers();
+
+  if (!catId) {
+    itemSelect.disabled = true;
+    return;
+  }
+
+  var filteredItems = menuData.items.filter(function(item) {
+    return String(item.category_id || "").trim() === String(catId).trim();
+  });
+
+  if (filteredItems.length === 0) {
+    itemSelect.innerHTML = "<option value=\"\">No drinks available</option>";
+    itemSelect.disabled = true;
+    return;
+  }
+
+  filteredItems.forEach(function(item) {
+    var opt = document.createElement("option");
+    opt.value = item.id;
+    opt.textContent = item.name;
+    itemSelect.appendChild(opt);
+  });
+
+  itemSelect.disabled = false;
+}
+
+function onItemChange() {
+  var itemId = document.getElementById("itemSelect").value;
+  var variantSelect = document.getElementById("variantSelect");
+  var addToCartBtn = document.getElementById("add-to-cart-btn");
+
+  if (!itemId) {
     resetVariantAndModifiers();
+    return;
   }
 
-  function showStatus(msg, isSuccess) {
-    const status = document.getElementById("status");
-    status.className = "status-msg " + (isSuccess ? "success" : "error");
-    status.textContent = msg;
+  var selectedItem = menuData.items.find(function(i) { return i.id === itemId; });
+  if (!selectedItem) return;
+
+  variantSelect.innerHTML = "";
+  var variants = selectedItem.variants || [];
+  var largeIndex = -1;
+
+  variants.forEach(function(v, idx) {
+    var opt = document.createElement("option");
+    opt.value = v.variant_id || v.id;
+
+    var price = (v.default_price !== undefined && v.default_price !== null)
+      ? parseFloat(v.default_price)
+      : (v.stores && v.stores[0] ? parseFloat(v.stores[0].price) : 0);
+
+    opt.dataset.price = price;
+
+    var labelName = v.option1_value;
+    if (!labelName) {
+      if (price === 5 || (v.sku && v.sku.toLowerCase().indexOf("small") !== -1)) {
+        labelName = "Small (8oz)";
+      } else if (price === 6 || (v.sku && v.sku.toLowerCase().indexOf("large") !== -1)) {
+        labelName = "Large (12oz)";
+      } else {
+        labelName = variants.length === 1 ? "Standard" : "Regular";
+      }
+    }
+
+    opt.dataset.label = labelName;
+    opt.textContent = labelName + " ($" + price.toFixed(2) + ")";
+
+    if (/large/i.test(labelName)) largeIndex = idx;
+
+    variantSelect.appendChild(opt);
+  });
+
+  variantSelect.disabled = variants.length === 0;
+
+  if (largeIndex !== -1) {
+    variantSelect.selectedIndex = largeIndex;
+  } else if (variantSelect.options.length > 0) {
+    variantSelect.selectedIndex = variantSelect.options.length - 1;
   }
 
-  function getOrderStartEndDates() {
-    if (!lastOrderDetails) return null;
-    const [year, month, day] = lastOrderDetails.date.split("-").map(Number);
-    
-    let [timeStr, period] = lastOrderDetails.time.split(" ");
-    let [hours, minutes] = timeStr.split(":").map(Number);
-    if (period === "PM" && hours < 12) hours += 12;
-    if (period === "AM" && hours === 12) hours = 0;
+  populateModifiers(selectedItem);
+  addToCartBtn.disabled = false;
+}
 
-    const startDate = new Date(year, month - 1, day, hours, minutes);
-    const endDate = new Date(startDate.getTime() + 15 * 60000);
+function populateModifiers(item) {
+  var container = document.getElementById("modifiersContainer");
+  container.innerHTML = "";
 
-    return { startDate, endDate };
+  var itemModIds = item.modifier_ids || [];
+  if (itemModIds.length === 0 || !menuData.modifiers) {
+    container.innerHTML = "<i>No add-ons available for this drink.</i>";
+    return;
   }
 
-  function addToGoogleCalendar() {
-    const dates = getOrderStartEndDates();
-    if (!dates) return;
+  var availableModifiers = menuData.modifiers.filter(function(m) { return itemModIds.indexOf(m.id) !== -1; });
 
-    const formatISO = d => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
-    const summaryList = lastOrderDetails.items.map(i => `${i.quantity}x ${i.name} (${i.variant})`).join(", ");
-    const title = encodeURIComponent(`☕ Coffee Express Pickup (${lastOrderDetails.customerName})`);
-    const details = encodeURIComponent(`Order Details:\n${summaryList}\n\nInstructions: ${lastOrderDetails.instructions || 'None'}\n\nTotal Due: $${lastOrderDetails.total}`);
-    const location = encodeURIComponent("Coffee Express Pickup");
-
-    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatISO(dates.startDate)}/${formatISO(dates.endDate)}&details=${details}&location=${location}`;
-    window.open(url, '_blank');
+  if (availableModifiers.length === 0) {
+    container.innerHTML = "<i>No add-ons available.</i>";
+    return;
   }
 
-  function downloadICSFile() {
-    const dates = getOrderStartEndDates();
-    if (!dates) return;
+  availableModifiers.forEach(function(mod) {
+    var groupDiv = document.createElement("div");
+    groupDiv.className = "modifier-group";
 
-    const formatISO = d => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
-    const summaryList = lastOrderDetails.items.map(i => `${i.quantity}x ${i.name} (${i.variant})`).join("\\n");
+    var title = document.createElement("strong");
+    title.textContent = mod.name;
+    groupDiv.appendChild(title);
 
-    const icsData = [
-      "BEGIN:VCALENDAR",
-      "VERSION:2.0",
-      "PRODID:-//Coffee Express//Order Pickup//EN",
-      "CALSCALE:GREGORIAN",
-      "METHOD:PUBLISH",
-      "BEGIN:VEVENT",
-      `SUMMARY:☕ Coffee Express Pickup (${lastOrderDetails.customerName})`,
-      `DESCRIPTION:Order Summary:\\n${summaryList}\\nTotal Due: $${lastOrderDetails.total}`,
-      `LOCATION:Coffee Express Pickup`,
-      `DTSTART:${formatISO(dates.startDate)}`,
-      `DTEND:${formatISO(dates.endDate)}`,
-      "BEGIN:VALARM",
-      "TRIGGER:-PT15M",
-      "ACTION:DISPLAY",
-      "DESCRIPTION:Coffee Express order pickup in 15 minutes!",
-      "END:VALARM",
-      "END:VEVENT",
-      "END:VCALENDAR"
-    ].join("\r\n");
+    var optionsList = document.createElement("div");
+    optionsList.className = "modifier-options-list";
 
-    const blob = new Blob([icsData], { type: "text/calendar;charset=utf-8" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = `Coffee_Express_Pickup_${lastOrderDetails.date}.ics`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    var options = mod.modifier_options || mod.options || [];
+    options.forEach(function(opt) {
+      var label = document.createElement("label");
+      var checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.className = "modifier-checkbox";
+      checkbox.value = opt.name || opt.option_name;
+
+      var optPrice = parseFloat(opt.price !== undefined ? opt.price : (opt.default_price || 0));
+      checkbox.dataset.price = optPrice;
+
+      var priceText = optPrice > 0 ? " (+$" + optPrice.toFixed(2) + ")" : "";
+      label.appendChild(checkbox);
+      label.appendChild(document.createTextNode(" " + (opt.name || opt.option_name) + priceText));
+
+      optionsList.appendChild(label);
+    });
+
+    groupDiv.appendChild(optionsList);
+    container.appendChild(groupDiv);
+  });
+}
+
+function resetVariantAndModifiers() {
+  var variantSelect = document.getElementById("variantSelect");
+  var container = document.getElementById("modifiersContainer");
+  var addToCartBtn = document.getElementById("add-to-cart-btn");
+
+  variantSelect.innerHTML = "<option value=\"\">Select an Item First...</option>";
+  variantSelect.disabled = true;
+  container.innerHTML = "<i>Select an item to view add-ons</i>";
+  addToCartBtn.disabled = true;
+}
+
+function addToCart() {
+  var itemSelect = document.getElementById("itemSelect");
+  var variantSelect = document.getElementById("variantSelect");
+  var qtyInput = document.getElementById("itemQuantity");
+
+  if (!itemSelect.value) return;
+
+  var itemId = itemSelect.value;
+  var itemObj = menuData.items.find(function(i) { return i.id === itemId; });
+  var selectedVariantOpt = variantSelect.options[variantSelect.selectedIndex];
+
+  var variantName = selectedVariantOpt ? selectedVariantOpt.dataset.label : "Standard";
+  var variantPrice = selectedVariantOpt ? parseFloat(selectedVariantOpt.dataset.price || 0) : 0;
+  var qty = parseInt(qtyInput.value, 10) || 1;
+
+  var selectedMods = [];
+  var modPriceTotal = 0;
+
+  document.querySelectorAll(".modifier-checkbox:checked").forEach(function(cb) {
+    var modPrice = parseFloat(cb.dataset.price || 0);
+    selectedMods.push(cb.value);
+    modPriceTotal += modPrice;
+  });
+
+  var itemUnitPrice = variantPrice + modPriceTotal;
+
+  var cartItem = {
+    name: itemObj.name,
+    variant: variantName,
+    quantity: qty,
+    unitPrice: itemUnitPrice,
+    price: itemUnitPrice * qty,
+    modifiers: selectedMods
+  };
+
+  cart.push(cartItem);
+  renderCart();
+
+  document.querySelectorAll(".modifier-checkbox").forEach(function(cb) { cb.checked = false; });
+  qtyInput.value = 1;
+}
+
+function renderCart() {
+  var cartList = document.getElementById("cartList");
+  var cartTotal = document.getElementById("cartTotal");
+
+  if (cart.length === 0) {
+    cartList.innerHTML = "<i>No items added yet.</i>";
+    cartTotal.textContent = "0.00";
+    return;
   }
+
+  cartList.innerHTML = "";
+  var total = 0;
+
+  cart.forEach(function(item, idx) {
+    total += item.price;
+    var div = document.createElement("div");
+    div.className = "cart-item";
+
+    var modText = item.modifiers.length > 0
+      ? "<br><small style=\"color:#94a3b8;\">+ " + item.modifiers.join(", ") + "</small>"
+      : "";
+
+    div.innerHTML =
+      "<div><strong>" + item.quantity + "x " + item.name + "</strong> (" + item.variant + ")" + modText + "</div>" +
+      "<div>$" + item.price.toFixed(2) +
+      "<button type=\"button\" onclick=\"removeFromCart(" + idx + ")\" style=\"width:auto; padding: 4px 8px; margin-left: 8px; background: #ef4444;\">✕</button></div>";
+
+    cartList.appendChild(div);
+  });
+
+  cartTotal.textContent = total.toFixed(2);
+}
+
+function removeFromCart(index) {
+  cart.splice(index, 1);
+  renderCart();
+}
+
+function handleOrderSubmit(e) {
+  e.preventDefault();
+  if (cart.length === 0) {
+    showStatus("Please add at least one item before placing your order.", false);
+    return;
+  }
+
+  var custName = document.getElementById("customerName").value;
+  var pDate = document.getElementById("pickupDate").value;
+  var pTime = document.getElementById("pickupTime").value;
+  var instructions = document.getElementById("specialInstructions").value;
+
+  if (!pTime) {
+    showStatus("Please select a valid pickup time.", false);
+    return;
+  }
+
+  lastOrderDetails = {
+    customerName: custName,
+    date: pDate,
+    time: pTime,
+    instructions: instructions,
+    items: cart.slice(),
+    total: document.getElementById("cartTotal").textContent
+  };
+
+  saveLastOrder(custName, cart.slice());
+
+  showStatus("Order placed successfully! Payment is due on pickup.", true);
+  document.getElementById("calendarArea").style.display = "block";
+
+  cart = [];
+  renderCart();
+  document.getElementById("order-form").reset();
+  initializeDatePicker();
+  populatePickupTimes();
+  resetVariantAndModifiers();
+  loadLastOrderUI();
+}
+
+function showStatus(msg, isSuccess) {
+  var status = document.getElementById("status");
+  status.className = "status-msg " + (isSuccess ? "success" : "error");
+  status.textContent = msg;
+}
+
+function getOrderStartEndDates() {
+  if (!lastOrderDetails) return null;
+  var parts = lastOrderDetails.date.split("-").map(Number);
+  var year = parts[0], month = parts[1], day = parts[2];
+
+  var timeParts = lastOrderDetails.time.split(" ");
+  var timeStr = timeParts[0], period = timeParts[1];
+  var hm = timeStr.split(":").map(Number);
+  var hours = hm[0], minutes = hm[1];
+  if (period === "PM" && hours < 12) hours += 12;
+  if (period === "AM" && hours === 12) hours = 0;
+
+  var startDate = new Date(year, month - 1, day, hours, minutes);
+  var endDate = new Date(startDate.getTime() + 15 * 60000);
+
+  return { startDate: startDate, endDate: endDate };
+}
+
+function addToGoogleCalendar() {
+  var dates = getOrderStartEndDates();
+  if (!dates) return;
+
+  var formatISO = function(d) { return d.toISOString().replace(/-|:|\.\d\d\d/g, ""); };
+  var summaryList = lastOrderDetails.items.map(function(i) {
+    return i.quantity + "x " + i.name + " (" + i.variant + ")";
+  }).join(", ");
+  var title = encodeURIComponent("Coffee Express Pickup (" + lastOrderDetails.customerName + ")");
+  var details = encodeURIComponent("Order Details:\n" + summaryList + "\n\nInstructions: " + (lastOrderDetails.instructions || "None") + "\n\nTotal Due: $" + lastOrderDetails.total);
+  var location = encodeURIComponent("Coffee Express Pickup");
+
+  var url = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + title + "&dates=" + formatISO(dates.startDate) + "/" + formatISO(dates.endDate) + "&details=" + details + "&location=" + location;
+  window.open(url, "_blank");
+}
+
+function downloadICSFile() {
+  var dates = getOrderStartEndDates();
+  if (!dates) return;
+
+  var formatISO = function(d) { return d.toISOString().replace(/-|:|\.\d\d\d/g, ""); };
+  var summaryList = lastOrderDetails.items.map(function(i) {
+    return i.quantity + "x " + i.name + " (" + i.variant + ")";
+  }).join("\\n");
+
+  var icsData = [
+    "BEGIN:VCALENDAR",
+    "VERSION:2.0",
+    "PRODID:-//Coffee Express//Order Pickup//EN",
+    "CALSCALE:GREGORIAN",
+    "METHOD:PUBLISH",
+    "BEGIN:VEVENT",
+    "SUMMARY:Coffee Express Pickup (" + lastOrderDetails.customerName + ")",
+    "DESCRIPTION:Order Summary:\\n" + summaryList + "\\nTotal Due: $" + lastOrderDetails.total,
+    "LOCATION:Coffee Express Pickup",
+    "DTSTART:" + formatISO(dates.startDate),
+    "DTEND:" + formatISO(dates.endDate),
+    "BEGIN:VALARM",
+    "TRIGGER:-PT15M",
+    "ACTION:DISPLAY",
+    "DESCRIPTION:Coffee Express order pickup reminder",
+    "END:VALARM",
+    "END:VEVENT",
+    "END:VCALENDAR"
+  ].join("\r\n");
+
+  var blob = new Blob([icsData], { type: "text/calendar;charset=utf-8" });
+  var link = document.createElement("a");
+  link.href = URL.createObjectURL(blob);
+  link.download = "Coffee_Express_Pickup_" + lastOrderDetails.date + ".ics";
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+}
+
+function prefillCustomerName() {
+  var savedName = localStorage.getItem("coffeeExpress_customerName");
+  if (savedName) {
+    document.getElementById("customerName").value = savedName;
+  }
+}
+
+function saveLastOrder(customerName, items) {
+  try {
+    localStorage.setItem("coffeeExpress_customerName", customerName);
+    localStorage.setItem("coffeeExpress_lastOrder", JSON.stringify({
+      customerName: customerName,
+      items: items,
+      savedAt: new Date().toISOString()
+    }));
+  } catch (e) {}
+}
+
+function getLastOrder() {
+  try {
+    var raw = localStorage.getItem("coffeeExpress_lastOrder");
+    return raw ? JSON.parse(raw) : null;
+  } catch (e) {
+    return null;
+  }
+}
+
+function loadLastOrderUI() {
+  var lastOrder = getLastOrder();
+  var reorderArea = document.getElementById("reorderArea");
+  var summaryDiv = document.getElementById("reorderSummary");
+
+  if (!lastOrder || !lastOrder.items || lastOrder.items.length === 0) {
+    reorderArea.style.display = "none";
+    return;
+  }
+
+  var summaryText = lastOrder.items.map(function(i) {
+    return i.quantity + "x " + i.name + " (" + i.variant + ")";
+  }).join(", ");
+
+  summaryDiv.textContent = summaryText;
+  reorderArea.style.display = "block";
+}
+
+function reorderLastOrder() {
+  var lastOrder = getLastOrder();
+  if (!lastOrder) return;
+
+  if (lastOrder.customerName) {
+    document.getElementById("customerName").value = lastOrder.customerName;
+  }
+
+  lastOrder.items.forEach(function(item) {
+    cart.push({
+      name: item.name,
+      variant: item.variant,
+      quantity: item.quantity,
+      unitPrice: item.unitPrice,
+      price: item.price,
+      modifiers: item.modifiers.slice()
+    });
+  });
+
+  renderCart();
+  showStatus("Last order added to your cart. Review and place your order below.", true);
+}
+
+function setupInstallPrompt() {
+  var installArea = document.getElementById("installArea");
+  var iosHint = document.getElementById("iosInstallHint");
+
+  window.addEventListener("beforeinstallprompt", function(e) {
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    installArea.style.display = "block";
+  });
+
+  var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  var isStandalone = window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches;
+
+  if (isIos && !isStandalone) {
+    installArea.style.display = "block";
+    iosHint.style.display = "block";
+  }
+}
+
+function triggerInstall() {
+  if (deferredInstallPrompt) {
+    deferredInstallPrompt.prompt();
+    deferredInstallPrompt.userChoice.then(function() {
+      deferredInstallPrompt = null;
+    });
+  } else {
+    document.getElementById("iosInstallHint").style.display = "block";
+  }
+}
+
+function setupQrCode() {
+  var img = document.getElementById("qrCodeImg");
+  var url = window.location.href.split("#")[0];
+  img.src = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(url);
+}
+
+function registerServiceWorker() {
+  if ("serviceWorker" in navigator) {
+    window.addEventListener("load", function() {
+      navigator.serviceWorker.register("sw.js").catch(function() {});
+    });
+  }
+}
+
 </script>
 </body>
 </html>
