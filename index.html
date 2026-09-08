@@ -181,6 +181,7 @@ var cart = [];
 var lastOrderDetails = null;
 var deferredInstallPrompt = null;
 var LOCAL_MENU = buildLocalMenu();
+var EXCLUDE_KEYWORDS = ["muffin", "slice", "cookie", "cake", "sandwich", "panini", "toastie", "wrap", "alternative milk", "syrup"];
 
 function buildLocalMenu() {
   function mkItem(id, categoryId, name) {
@@ -231,11 +232,19 @@ function buildLocalMenu() {
   };
 }
 
+function isExcludedItem(name) {
+  var n = (name || "").toLowerCase();
+  for (var i = 0; i < EXCLUDE_KEYWORDS.length; i++) {
+    if (n.indexOf(EXCLUDE_KEYWORDS[i]) !== -1) return true;
+  }
+  return false;
+}
+
 function classifyBucket(text) {
   var t = (text || "").toLowerCase();
   if (t.indexOf("tea") !== -1 || t.indexOf("chai") !== -1) return "tea";
   if (t.indexOf("iced") !== -1 || t.indexOf("cold") !== -1 || t.indexOf("frapp") !== -1 || t.indexOf("lemonade") !== -1 || t.indexOf("soda") !== -1 || t.indexOf("juice") !== -1) return "cold";
-  if (t.indexOf("coffee") !== -1 || t.indexOf("latte") !== -1 || t.indexOf("cappuccino") !== -1 || t.indexOf("espresso") !== -1 || t.indexOf("mocha") !== -1 || t.indexOf("hot") !== -1 || t.indexOf("black") !== -1 || t.indexOf("flat white") !== -1 || t.indexOf("chocolate") !== -1) return "hot";
+  if (/\bhot\b/.test(t) || t.indexOf("coffee") !== -1 || t.indexOf("latte") !== -1 || t.indexOf("cappuccino") !== -1 || t.indexOf("espresso") !== -1 || t.indexOf("mocha") !== -1 || t.indexOf("black") !== -1 || t.indexOf("flat white") !== -1 || t.indexOf("macchiato") !== -1 || t.indexOf(" mac") !== -1 || t.indexOf("chocolate") !== -1 || t.indexOf("babyccino") !== -1) return "hot";
   return null;
 }
 
@@ -246,8 +255,9 @@ function buildFinalMenu(apiData) {
     var catNameById = {};
     (apiData.categories || []).forEach(function(c) { catNameById[c.id] = c.name; });
     apiData.items.forEach(function(item) {
+      if (isExcludedItem(item.name)) return;
       var catName = catNameById[item.category_id] || "";
-      var bucket = classifyBucket(item.name + " " + catName);
+      var bucket = classifyBucket(item.name) || classifyBucket(catName);
       if (bucket) buckets[bucket].push(item);
     });
   }
