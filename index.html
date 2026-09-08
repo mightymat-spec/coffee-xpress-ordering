@@ -135,14 +135,12 @@
 
   <div class="order-card">
     <div class="brand-header">
-      <!-- Direct relative path to logo file uploaded in your repo -->
-      <img src="GEM_placeHolder_logo_V22.jpg" alt="Gemco Players Community Theatre & The Gem Community Arts Centre" class="gemco-joint-logo">
+      <img src="GEM_placeHolder_logo_V22_2.jpg" alt="Gemco Players Community Theatre & The Gem Community Arts Centre" class="gemco-joint-logo">
       <h2>Coffee Express</h2>
     </div>
 
     <div class="charity-banner">
-      <!-- Direct relative path to charity tick file uploaded in your repo -->
-      <img src="ACNC-Registered-Charity-Logo_RGB.png" alt="ACNC Registered Charity Tick" class="acnc-tick-img">
+      <img src="ACNC-Registered-Charity-Logo_RGB_2.png" alt="ACNC Registered Charity Tick" class="acnc-tick-img">
       <span>All proceeds support the Gem Community Arts Centre</span>
     </div>
 
@@ -248,7 +246,8 @@
       const status = document.getElementById("status");
 
       try {
-        const res = await fetch(APPS_SCRIPT_URL).then(r => r.json());
+        const response = await fetch(APPS_SCRIPT_URL);
+        const res = await response.json();
 
         if (res.status === "success" && res.items && res.items.length > 0) {
           select.innerHTML = '<option value="" data-price="0">-- Select Drink / Item --</option>';
@@ -262,14 +261,14 @@
           });
           if (status) status.textContent = "";
         } else {
-          throw new Error("No menu items retrieved");
+          throw new Error("No menu items returned");
         }
       } catch (err) {
         console.error("Menu load error:", err);
-        select.innerHTML = '<option value="" data-price="0">-- Select Drink / Item --</option>';
+        select.innerHTML = '<option value="" data-price="0">-- Unable to load menu --</option>';
         if (status) {
           status.className = "status-msg error";
-          status.textContent = "⚠️ Unable to load live menu prices. Please try refreshing.";
+          status.textContent = "⚠️ Unable to load menu prices. Check Apps Script deployment settings.";
         }
       }
     }
@@ -315,23 +314,17 @@
       };
 
       try {
-        const response = await fetch(APPS_SCRIPT_URL, {
+        await fetch(APPS_SCRIPT_URL, {
           method: "POST",
-          redirect: "follow",
-          headers: { "Content-Type": "text/plain;charset=utf-8" },
+          mode: "no-cors",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify(orderPayload)
         });
 
-        const res = await response.json();
-
-        if (res.status === "success") {
-          status.className = "status-msg success";
-          status.textContent = "✅ Order placed! Payment is due on pick up.";
-          document.getElementById("order-form").reset();
-          updateTotal();
-        } else {
-          throw new Error(res.message);
-        }
+        status.className = "status-msg success";
+        status.textContent = "✅ Order placed! Payment is due on pick up.";
+        document.getElementById("order-form").reset();
+        updateTotal();
       } catch (err) {
         console.error("Submit error:", err);
         status.className = "status-msg error";
