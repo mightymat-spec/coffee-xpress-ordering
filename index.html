@@ -193,6 +193,13 @@
         </div>
       </div>
 
+      <!-- Pickup Date Selection -->
+      <div class="form-group">
+        <label for="pickupDate">Pickup Date</label>
+        <input type="date" id="pickupDate" name="pickupDate" required>
+      </div>
+
+      <!-- Pickup Time Selection -->
       <div class="form-group">
         <label for="pickupTime">Pickup Time (8:00 AM – 11:00 AM)</label>
         <select id="pickupTime" name="pickupTime" required>
@@ -218,6 +225,13 @@
     let submitted = false;
     let loyverseMenu = { hotDrinks: [], coldDrinks: [], modifiers: [] };
     let cart = [];
+
+    function initializeDatePicker() {
+      const dateInput = document.getElementById("pickupDate");
+      const today = new Date().toISOString().split("T")[0];
+      dateInput.min = today;
+      dateInput.value = today;
+    }
 
     function populateModifiers(modifiers) {
       const container = document.getElementById("modifiersContainer");
@@ -297,7 +311,15 @@
             const opt = document.createElement("option");
             opt.value = v.option_name;
             opt.dataset.price = v.price;
-            opt.textContent = `${v.option_name} ($${v.price.toFixed(2)})`;
+
+            let labelName = v.option_name;
+            if (v.option_name.toLowerCase().includes("small") || v.price === 5) {
+              labelName = "Small (8oz)";
+            } else if (v.option_name.toLowerCase().includes("large") || v.price === 6) {
+              labelName = "Large (12oz)";
+            }
+
+            opt.textContent = `${labelName} ($${v.price.toFixed(2)})`;
             variantSelect.appendChild(opt);
           });
         }
@@ -341,7 +363,6 @@
       cart.push(cartItem);
       renderCart();
 
-      // Clear selections for next item
       document.querySelectorAll('.modifier-checkbox').forEach(cb => cb.checked = false);
     }
 
@@ -424,6 +445,7 @@
         status.className = "status-msg success";
         status.textContent = "✅ Order placed successfully! Payment is due on pickup.";
         document.getElementById("order-form").reset();
+        initializeDatePicker();
         cart = [];
         renderCart();
         const btn = document.getElementById("submit-btn");
@@ -433,6 +455,7 @@
       }
     });
 
+    initializeDatePicker();
     populatePickupTimes();
     fetchMenu();
   </script>
