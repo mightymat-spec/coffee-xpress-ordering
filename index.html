@@ -22,10 +22,7 @@
       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
       border: 1px solid #334155;
     }
-    .brand-header {
-      text-align: center;
-      margin-bottom: 20px;
-    }
+    .brand-header { text-align: center; margin-bottom: 20px; }
     .gemco-joint-logo {
       width: 100%;
       max-width: 380px;
@@ -35,13 +32,8 @@
       background: #ffffff;
       padding: 10px 16px;
       border-radius: 8px;
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
-    h2 {
-      margin: 8px 0 0 0;
-      color: #ffffff;
-      font-size: 24px;
-    }
+    h2 { margin: 8px 0 0 0; color: #ffffff; font-size: 24px; }
     .charity-banner {
       display: flex;
       align-items: center;
@@ -55,12 +47,10 @@
       font-size: 13px;
       font-weight: 600;
       margin-bottom: 16px;
-      text-align: left;
     }
     .acnc-tick-img {
       height: 48px;
       width: auto;
-      flex-shrink: 0;
       background: #ffffff;
       padding: 2px;
       border-radius: 50%;
@@ -95,10 +85,6 @@
       border-radius: 8px;
       font-size: 15px;
     }
-    input:focus, select:focus, textarea:focus {
-      outline: none;
-      border-color: #38bdf8;
-    }
     .total-box {
       background: #0f172a;
       border: 1px solid #334155;
@@ -122,10 +108,8 @@
       font-weight: 700;
       border-radius: 8px;
       cursor: pointer;
-      transition: background 0.2s;
     }
-    button:hover { background: #1d4ed8; }
-    button:disabled { background: #64748b; cursor: not-allowed; }
+    button:disabled { background: #64748b; }
     .status-msg { margin-top: 15px; text-align: center; font-weight: 600; }
     .success { color: #4ade80; }
     .error { color: #f87171; }
@@ -133,41 +117,47 @@
 </head>
 <body>
 
+  <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
+
   <div class="order-card">
     <div class="brand-header">
-      <img src="GEM_placeHolder_logo_V22.jpg" alt="Gemco Players Community Theatre & The Gem Community Arts Centre" class="gemco-joint-logo">
+      <img src="GEM_placeHolder_logo_V22.jpg" alt="Gemco Players" class="gemco-joint-logo">
       <h2>Coffee Express</h2>
     </div>
 
     <div class="charity-banner">
-      <img src="ACNC-Registered-Charity-Logo_RGB.png" alt="ACNC Registered Charity Tick" class="acnc-tick-img">
+      <img src="ACNC-Registered-Charity-Logo_RGB.png" alt="ACNC Charity" class="acnc-tick-img">
       <span>All proceeds support the Gem Community Arts Centre</span>
     </div>
 
-    <div class="payment-notice">
-      💳 Payment on Pick Up
-    </div>
+    <div class="payment-notice">💳 Payment on Pick Up</div>
+    <div class="hours-info">📅 Open Tuesday & Thursday mornings (8:00 AM – 11:00 AM) during school terms.</div>
 
-    <div class="hours-info">
-      📅 Open Tuesday & Thursday mornings (8:00 AM – 11:00 AM) during school terms.
-    </div>
-
-    <form id="order-form">
+    <form id="order-form" action="https://script.google.com/macros/s/AKfycbyPGbb6wVaFi8ZU3RRC1EPtJyaCypUJ_FM9xq_v4zBzlql-J5jfhyeorWy4gPA1Qu06/exec" method="POST" target="hidden_iframe">
+      
       <div class="form-group">
         <label for="customerName">Your Name</label>
-        <input type="text" id="customerName" required placeholder="Enter your name">
+        <input type="text" id="customerName" name="customerName" required placeholder="Enter your name">
       </div>
 
       <div class="form-group">
         <label for="coffeeType">Coffee / Drink Type</label>
-        <select id="coffeeType" required>
-          <option value="" data-price="0">Loading menu...</option>
+        <select id="coffeeType" name="coffeeType" required>
+          <option value="" data-price="0">-- Select Drink --</option>
+          <option value="Espresso" data-price="3">Espresso ($3.00)</option>
+          <option value="Cappuccino" data-price="4">Cappuccino ($4.00)</option>
+          <option value="Latte" data-price="4.5">Latte ($4.50)</option>
+          <option value="Americano" data-price="3.5">Americano ($3.50)</option>
+          <option value="Cold Brew" data-price="4.5">Cold Brew ($4.50)</option>
+          <option value="Iced Latte" data-price="4.75">Iced Latte ($4.75)</option>
+          <option value="Croissant" data-price="3.25">Croissant ($3.25)</option>
+          <option value="Muffin" data-price="3">Muffin ($3.00)</option>
         </select>
       </div>
 
       <div class="form-group">
         <label for="size">Size</label>
-        <select id="size" required>
+        <select id="size" name="size" required>
           <option value="Small (8oz)" data-price="0">Small (8oz)</option>
           <option value="Large (12oz)" data-price="1.00">Large (12oz) (+ $1.00)</option>
         </select>
@@ -175,14 +165,14 @@
 
       <div class="form-group">
         <label for="pickupTime">Pickup Time (8:00 AM – 11:00 AM)</label>
-        <select id="pickupTime" required>
+        <select id="pickupTime" name="pickupTime" required>
           <option value="">-- Select Pickup Time --</option>
         </select>
       </div>
 
       <div class="form-group">
         <label for="milk">Milk Choice</label>
-        <select id="milk">
+        <select id="milk" name="milk">
           <option value="Full Cream" data-price="0">Full Cream</option>
           <option value="Skim Milk" data-price="0">Skim Milk</option>
           <option value="Oat Milk" data-price="0.70">Oat Milk (+ $0.70)</option>
@@ -193,7 +183,7 @@
 
       <div class="form-group">
         <label for="syrup">Syrup / Extra Shot</label>
-        <select id="syrup">
+        <select id="syrup" name="syrup">
           <option value="None" data-price="0">None</option>
           <option value="Vanilla" data-price="0.70">Vanilla (+ $0.70)</option>
           <option value="Caramel" data-price="0.70">Caramel (+ $0.70)</option>
@@ -204,8 +194,10 @@
 
       <div class="form-group">
         <label for="notes">Special Instructions</label>
-        <textarea id="notes" rows="2" placeholder="e.g. Extra hot, half strength..."></textarea>
+        <textarea id="notes" name="notes" rows="2" placeholder="e.g. Extra hot..."></textarea>
       </div>
+
+      <input type="hidden" id="totalPriceInput" name="totalPrice" value="$0.00">
 
       <div class="total-box">
         <span>Estimated Total:</span>
@@ -219,125 +211,67 @@
   </div>
 
   <script>
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPGbb6wVaFi8ZU3RRC1EPtJyaCypUJ_FM9xq_v4zBzlql-J5jfhyeorWy4gPA1Qu06/exec";
+    let submitted = false;
 
     function populatePickupTimes() {
       const select = document.getElementById("pickupTime");
-      const startTime = 8 * 60;
-      const endTime = 11 * 60;
-
-      for (let time = startTime; time <= endTime; time += 5) {
+      for (let time = 8 * 60; time <= 11 * 60; time += 5) {
         const hours24 = Math.floor(time / 60);
         const minutes = time % 60;
         const period = hours24 >= 12 ? "PM" : "AM";
         const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
         const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
-        const timeString = `${hours12}:${formattedMinutes} ${period}`;
-
         const opt = document.createElement("option");
-        opt.value = timeString;
-        opt.textContent = timeString;
+        opt.value = `${hours12}:${formattedMinutes} ${period}`;
+        opt.textContent = opt.value;
         select.appendChild(opt);
       }
     }
 
-    function handleMenuResponse(res) {
-      const select = document.getElementById("coffeeType");
-      const status = document.getElementById("status");
-
-      if (res && res.status === "success" && res.items && res.items.length > 0) {
-        select.innerHTML = '<option value="" data-price="0">-- Select Drink / Item --</option>';
-        res.items.forEach(item => {
-          const opt = document.createElement("option");
-          opt.value = item.name;
-          const priceNum = parseFloat(item.price) || 0;
-          opt.dataset.price = priceNum;
-          opt.textContent = priceNum > 0 ? `${item.name} ($${priceNum.toFixed(2)})` : item.name;
-          select.appendChild(opt);
-        });
-        if (status) status.textContent = "";
-      } else {
-        select.innerHTML = '<option value="" data-price="0">-- Unable to load menu --</option>';
-      }
-    }
-
-    function loadMenuJSONP() {
-      const script = document.createElement("script");
-      script.src = `${APPS_SCRIPT_URL}?callback=handleMenuResponse`;
-      script.onerror = function() {
-        const status = document.getElementById("status");
-        if (status) {
-          status.className = "status-msg error";
-          status.textContent = "⚠️ Unable to load menu. Re-deploy Apps Script as Web App.";
-        }
-      };
-      document.body.appendChild(script);
-    }
-
     function updateTotal() {
-      const coffeeSelect = document.getElementById("coffeeType");
-      const sizeSelect = document.getElementById("size");
-      const milkSelect = document.getElementById("milk");
-      const syrupSelect = document.getElementById("syrup");
+      const coffee = document.getElementById("coffeeType");
+      const size = document.getElementById("size");
+      const milk = document.getElementById("milk");
+      const syrup = document.getElementById("syrup");
 
-      const itemPrice = parseFloat(coffeeSelect.options[coffeeSelect.selectedIndex]?.dataset.price || 0);
-      const sizePrice = parseFloat(sizeSelect.options[sizeSelect.selectedIndex]?.dataset.price || 0);
-      const milkPrice = parseFloat(milkSelect.options[milkSelect.selectedIndex]?.dataset.price || 0);
-      const syrupPrice = parseFloat(syrupSelect.options[syrupSelect.selectedIndex]?.dataset.price || 0);
+      const total = 
+        parseFloat(coffee.options[coffee.selectedIndex]?.dataset.price || 0) +
+        parseFloat(size.options[size.selectedIndex]?.dataset.price || 0) +
+        parseFloat(milk.options[milk.selectedIndex]?.dataset.price || 0) +
+        parseFloat(syrup.options[syrup.selectedIndex]?.dataset.price || 0);
 
-      const total = itemPrice + sizePrice + milkPrice + syrupPrice;
-      document.getElementById("order-total").textContent = `$${total.toFixed(2)}`;
+      const formatted = `$${total.toFixed(2)}`;
+      document.getElementById("order-total").textContent = formatted;
+      document.getElementById("totalPriceInput").value = formatted;
     }
 
     ["coffeeType", "size", "milk", "syrup"].forEach(id => {
       document.getElementById(id).addEventListener("change", updateTotal);
     });
 
-    document.getElementById("order-form").addEventListener("submit", async function(e) {
-      e.preventDefault();
-
+    document.getElementById("order-form").addEventListener("submit", function() {
+      submitted = true;
       const btn = document.getElementById("submit-btn");
-      const status = document.getElementById("status");
-
       btn.disabled = true;
       btn.textContent = "Sending Order...";
-      status.textContent = "";
+    });
 
-      const orderPayload = {
-        customerName: document.getElementById("customerName").value,
-        coffeeType: document.getElementById("coffeeType").value,
-        size: document.getElementById("size").value,
-        pickupTime: document.getElementById("pickupTime").value,
-        milk: document.getElementById("milk").value,
-        syrup: document.getElementById("syrup").value,
-        notes: document.getElementById("notes").value,
-        totalPrice: document.getElementById("order-total").textContent
-      };
-
-      try {
-        await fetch(APPS_SCRIPT_URL, {
-          method: "POST",
-          mode: "no-cors",
-          headers: { "Content-Type": "text/plain" },
-          body: JSON.stringify(orderPayload)
-        });
-
+    document.getElementById("hidden_iframe").addEventListener("load", function() {
+      if (submitted) {
+        const status = document.getElementById("status");
         status.className = "status-msg success";
-        status.textContent = "✅ Order placed! Payment is due on pick up.";
+        status.textContent = "✅ Order placed successfully! Payment is due on pickup.";
         document.getElementById("order-form").reset();
         updateTotal();
-      } catch (err) {
-        console.error("Submit error:", err);
-        status.className = "status-msg error";
-        status.textContent = "❌ Failed to place order. Please try again.";
-      } finally {
+        const btn = document.getElementById("submit-btn");
         btn.disabled = false;
         btn.textContent = "Place Order";
+        submitted = false;
       }
     });
 
     populatePickupTimes();
-    loadMenuJSONP();
+    updateTotal();
   </script>
 </body>
 </html>
