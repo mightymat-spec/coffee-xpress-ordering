@@ -229,8 +229,8 @@
   function onCategoryChange() {
     const catId = document.getElementById("categorySelect").value;
     const itemSelect = document.getElementById("itemSelect");
-    itemSelect.innerHTML = '<option value="">Select a Drink...</option>';
     
+    itemSelect.innerHTML = '<option value="">-- Select Drink --</option>';
     resetVariantAndModifiers();
 
     if (!catId) {
@@ -238,12 +238,15 @@
       return;
     }
 
-    const filteredItems = menuData.items.filter(item => item.category_id === catId);
+    // Robust String comparison for category IDs
+    let filteredItems = menuData.items.filter(item => 
+      String(item.category_id).trim() === String(catId).trim()
+    );
 
+    // Fallback: If no items match category_id directly, list all active drinks
     if (filteredItems.length === 0) {
-      itemSelect.innerHTML = '<option value="">No items in this category</option>';
-      itemSelect.disabled = true;
-      return;
+      console.warn("No category_id match found for " + catId + ". Showing all drinks.");
+      filteredItems = menuData.items;
     }
 
     filteredItems.forEach(item => {
