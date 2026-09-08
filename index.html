@@ -162,19 +162,6 @@
         <label for="pickupTime">Pickup Time (8:00 AM – 11:00 AM)</label>
         <select id="pickupTime" required>
           <option value="">-- Select Pickup Time --</option>
-          <option value="8:00 AM">8:00 AM</option>
-          <option value="8:15 AM">8:15 AM</option>
-          <option value="8:30 AM">8:30 AM</option>
-          <option value="8:45 AM">8:45 AM</option>
-          <option value="9:00 AM">9:00 AM</option>
-          <option value="9:15 AM">9:15 AM</option>
-          <option value="9:30 AM">9:30 AM</option>
-          <option value="9:45 AM">9:45 AM</option>
-          <option value="10:00 AM">10:00 AM</option>
-          <option value="10:15 AM">10:15 AM</option>
-          <option value="10:30 AM">10:30 AM</option>
-          <option value="10:45 AM">10:45 AM</option>
-          <option value="11:00 AM">11:00 AM</option>
         </select>
       </div>
 
@@ -219,6 +206,26 @@
   <script>
     const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbyPGbb6wVaFi8ZU3RRC1EPtJyaCypUJ_FM9xq_v4zBzIqI-J5jfhyeorWy4gPA1QuO6/exec";
     let menuItems = [];
+
+    function populatePickupTimes() {
+      const select = document.getElementById("pickupTime");
+      const startTime = 8 * 60; // 8:00 AM in minutes
+      const endTime = 11 * 60;  // 11:00 AM in minutes
+
+      for (let time = startTime; time <= endTime; time += 5) {
+        const hours24 = Math.floor(time / 60);
+        const minutes = time % 60;
+        const period = hours24 >= 12 ? "PM" : "AM";
+        const hours12 = hours24 % 12 === 0 ? 12 : hours24 % 12;
+        const formattedMinutes = minutes < 10 ? `0${minutes}` : minutes;
+        const timeString = `${hours12}:${formattedMinutes} ${period}`;
+
+        const opt = document.createElement("option");
+        opt.value = timeString;
+        opt.textContent = timeString;
+        select.appendChild(opt);
+      }
+    }
 
     async function loadMenu() {
       const select = document.getElementById("coffeeType");
@@ -315,6 +322,7 @@
       }
     });
 
+    populatePickupTimes();
     loadMenu();
   </script>
 </body>
