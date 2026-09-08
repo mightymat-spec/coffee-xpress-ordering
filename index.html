@@ -4,6 +4,18 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Coffee Express - Order</title>
+
+  <!-- Mobile Web App & Home Screen App Tile Meta Tags -->
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Coffee Express (Gem)">
+  <meta name="application-name" content="Coffee Express (Gem)">
+
+  <!-- Icons for iOS & Android Home Screen -->
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" href="apple-touch-icon.png">
+
   <style>
     * { box-sizing: border-box; }
     body {
@@ -83,6 +95,28 @@
       margin-bottom: 20px;
       text-align: center;
     }
+    .reorder-banner {
+      display: none;
+      background: #0f766e;
+      border: 1px solid #14b8a6;
+      color: #ccfbf1;
+      padding: 12px;
+      border-radius: 8px;
+      margin-bottom: 18px;
+      text-align: center;
+    }
+    .reorder-btn {
+      background: #14b8a6;
+      color: #042f2e;
+      border: none;
+      padding: 8px 14px;
+      font-weight: bold;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 8px;
+      width: auto;
+      font-size: 13px;
+    }
     .form-group { margin-bottom: 18px; }
     label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 14px; color: #e2e8f0; }
     input, select, textarea {
@@ -134,6 +168,12 @@
 
     <div class="payment-notice">💳 Payment on Pick Up</div>
     <div class="hours-info">📅 Open Tuesday & Thursday mornings (8:00 AM – 11:00 AM) during school terms.</div>
+
+    <!-- Re-order Previous Items Banner -->
+    <div id="reorderBanner" class="reorder-banner">
+      <div id="reorderSummary" style="font-size: 13px;"></div>
+      <button type="button" class="reorder-btn" onclick="loadPreviousOrder()">⚡ Load Last Order</button>
+    </div>
 
     <form id="order-form" action="https://script.google.com/macros/s/AKfycbzQQCDOBJMU2YEXtekiww-12uXuoZLwOSRCXsoRDYFIf75uq8OEwK-S7sIW_0PAn-ZJ/exec" method="POST" target="hidden_iframe">
       
@@ -267,6 +307,38 @@
       return `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${startIso}/${endIso}&details=${details}&location=${location}`;
     }
 
+    function checkSavedCustomerData() {
+      const savedName = localStorage.getItem('coffee_customer_name');
+      const savedCart = localStorage.getItem('coffee_last_cart');
+
+      if (savedName) {
+        document.getElementById('customerName').value = savedName;
+      }
+
+      if (savedCart) {
+        try {
+          const parsedCart = JSON.parse(savedCart);
+          if (parsedCart.length > 0) {
+            const summaryText = parsedCart.map(i => `${i.quantity}x ${i.drink}`).join(', ');
+            document.getElementById('reorderSummary').innerHTML = `☕ <strong>Welcome back!</strong> Quick reorder: <em>${summaryText}</em>`;
+            document.getElementById('reorderBanner').style.display = 'block';
+          }
+        } catch (e) {}
+      }
+    }
+
+    function loadPreviousOrder() {
+      const savedCart = localStorage.getItem('coffee_last_cart');
+      if (savedCart) {
+        try {
+          cart = JSON.parse(savedCart);
+          // Refresh IDs for modern timestamping
+          cart.forEach(item => item.id = Date.now() + Math.random());
+          renderCart();
+        } catch (e) {}
+      }
+    }
+
     function populateModifiers(modifiers) {
       const container = document.getElementById("modifiersContainer");
       container.innerHTML = "";
@@ -341,7 +413,9 @@
         const item = items[selectedIndex];
         if (item.variants && item.variants.length > 0) {
           variantSelect.disabled = false;
-          item.variants.forEach(v => {
+          let defaultSelectIndex = 0;
+
+          item.variants.forEach((v, idx) => {
             const opt = document.createElement("option");
             opt.value = v.option_name;
             opt.dataset.price = v.price;
@@ -351,11 +425,15 @@
               labelName = "Small (8oz)";
             } else if (v.option_name.toLowerCase().includes("large") || v.price === 6) {
               labelName = "Large (12oz)";
+              defaultSelectIndex = idx;
             }
 
             opt.textContent = `${labelName} ($${v.price.toFixed(2)})`;
             variantSelect.appendChild(opt);
           });
+
+          // Pre-select Large by default
+          variantSelect.selectedIndex = defaultSelectIndex;
         }
       } else {
         variantSelect.disabled = true;
@@ -467,6 +545,12 @@
         alert("Please add at least one item to your order before placing it.");
         return;
       }
+
+      // Save customer name and cart to Local Storage for future visits
+      const customer = document.getElementById("customerName").value;
+      if (customer) localStorage.setItem('coffee_customer_name', customer);
+      if (cart.length > 0) localStorage.setItem('coffee_last_cart', JSON.stringify(cart));
+
       submitted = true;
       const btn = document.getElementById("submit-btn");
       btn.disabled = true;
@@ -497,6 +581,7 @@
         initializeDatePicker();
         cart = [];
         renderCart();
+        checkSavedCustomerData();
         
         const btn = document.getElementById("submit-btn");
         btn.disabled = false;
@@ -508,6 +593,7 @@
     initializeDatePicker();
     populatePickupTimes();
     fetchMenu();
+    checkSavedCustomerData();
   </script>
 </body>
 </html>
