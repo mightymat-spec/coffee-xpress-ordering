@@ -3,32 +3,38 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Coffee Xpress Ordering</title>
+  <title>Coffee Express - Order</title>
   <style>
-    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 15px; background: #f9f9f9; color: #333; }
-    .card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); margin-bottom: 20px; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; max-width: 600px; margin: 20px auto; padding: 0 15px; background: #0f172a; color: #f8fafc; }
+    .card { background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-bottom: 20px; border: 1px solid #334155; }
     .form-group { margin-bottom: 15px; }
-    label { display: block; font-weight: bold; margin-bottom: 5px; }
-    select, input[type="date"], input[type="text"], button { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box; font-size: 14px; }
-    button { background: #0070f3; color: white; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; }
-    button:hover { background: #0051a2; }
-    .modifier-group { margin: 8px 0; }
-    .modifier-group label { font-weight: normal; display: inline-flex; align-items: center; gap: 8px; cursor: pointer; }
-    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid #eee; }
-    .status-msg { padding: 10px; border-radius: 6px; margin-top: 10px; display: none; }
-    .status-msg.success { background: #e6f4ea; color: #137333; display: block; }
-    .status-msg.error { background: #fce8e6; color: #c5221f; display: block; }
+    label { display: block; font-weight: 600; margin-bottom: 6px; color: #cbd5e1; }
+    select, input[type="date"], button { width: 100%; padding: 12px; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #f8fafc; font-size: 14px; box-sizing: border-box; }
+    button { background: #2563eb; color: #ffffff; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; border-radius: 8px; }
+    button:hover { background: #1d4ed8; }
+    button:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
+    .modifier-group { margin: 10px 0; padding: 10px; background: #0f172a; border-radius: 6px; }
+    .modifier-group label { font-weight: normal; display: flex; align-items: center; gap: 8px; cursor: pointer; color: #e2e8f0; margin-top: 4px; }
+    .cart-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 0; border-bottom: 1px solid #334155; }
+    .status-msg { padding: 12px; border-radius: 8px; margin-top: 15px; display: none; }
+    .status-msg.success { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; display: block; }
+    .status-msg.error { background: #7f1d1d; color: #fca5a5; border: 1px solid #dc2626; display: block; }
+    .calendar-actions { display: flex; gap: 10px; margin-top: 12px; }
+    .calendar-btn { background: #059669; font-size: 13px; padding: 10px; }
+    .calendar-btn:hover { background: #047857; }
+    .ics-btn { background: #4f46e5; font-size: 13px; padding: 10px; }
+    .ics-btn:hover { background: #4338ca; }
   </style>
 </head>
 <body>
 
   <div class="card">
-    <h2>☕ Coffee Xpress Order</h2>
+    <h2>☕ Coffee Express Pickup</h2>
     
     <form id="order-form" onsubmit="handleOrderSubmit(event)">
-      <!-- Pickup Date -->
+      <!-- Pickup Date (Tuesdays / Thursdays Only) -->
       <div class="form-group">
-        <label for="pickupDate">Pickup Date</label>
+        <label for="pickupDate">Pickup Date (Tuesdays & Thursdays Only)</label>
         <input type="date" id="pickupDate" name="pickupDate" required>
       </div>
 
@@ -42,13 +48,13 @@
       <div class="form-group">
         <label for="categorySelect">Category</label>
         <select id="categorySelect" onchange="onCategoryChange()" required>
-          <option value="">Select a Category...</option>
+          <option value="">Loading categories...</option>
         </select>
       </div>
 
       <!-- Item Selection -->
       <div class="form-group">
-        <label for="itemSelect">Item</label>
+        <label for="itemSelect">Drink Item</label>
         <select id="itemSelect" onchange="onItemChange()" required disabled>
           <option value="">Select a Category First...</option>
         </select>
@@ -56,7 +62,7 @@
 
       <!-- Size / Variant Selection -->
       <div class="form-group">
-        <label for="variantSelect">Size / Option</label>
+        <label for="variantSelect">Variant / Size</label>
         <select id="variantSelect" required disabled>
           <option value="">Select an Item First...</option>
         </select>
@@ -64,23 +70,30 @@
 
       <!-- Modifiers Container -->
       <div class="form-group">
-        <label>Add-ons / Modifiers</label>
+        <label>Customizations / Add-ons</label>
         <div id="modifiersContainer"><i>Select an item to view add-ons</i></div>
       </div>
 
-      <button type="button" id="add-to-cart-btn" onclick="addToCart()" disabled>Add to Cart</button>
+      <button type="button" id="add-to-cart-btn" onclick="addToCart()" disabled>Add Item to Order</button>
     </form>
   </div>
 
   <!-- Cart & Summary -->
   <div class="card">
     <h3 style="margin-top:0;">Order Summary</h3>
-    <div id="cartList"><i>Your cart is empty.</i></div>
+    <div id="cartList"><i>Your order is empty.</i></div>
     <div style="margin-top: 15px; font-weight: bold; font-size: 16px;">
-      Total: $<span id="cartTotal">0.00</span>
+      Grand Total: $<span id="cartTotal">0.00</span>
     </div>
-    <button type="submit" form="order-form" id="submit-btn" style="margin-top: 15px;">Place Order</button>
+    <button type="submit" form="order-form" id="submit-btn" style="margin-top: 15px;">Place Order (Payment on Pickup)</button>
+
     <div id="status" class="status-msg"></div>
+    <div id="calendarArea" style="display: none;">
+      <div class="calendar-actions">
+        <button type="button" class="calendar-btn" onclick="addToGoogleCalendar()">📅 Add to Google Calendar</button>
+        <button type="button" class="ics-btn" onclick="downloadICSFile()">⏰ Download Reminder (.ics)</button>
+      </div>
+    </div>
   </div>
 
 <script>
@@ -88,6 +101,7 @@
 
   let menuData = { categories: [], items: [], modifiers: [] };
   let cart = [];
+  let lastOrderDetails = null;
 
   document.addEventListener("DOMContentLoaded", function() {
     initializeDatePicker();
@@ -95,18 +109,47 @@
     fetchMenuData();
   });
 
+  // --- Date Picker (Tuesdays & Thursdays Only) ---
   function initializeDatePicker() {
     const dateInput = document.getElementById("pickupDate");
-    const today = new Date().toISOString().split("T")[0];
-    dateInput.min = today;
-    dateInput.value = today;
+    let target = new Date();
+
+    // Advance date until Tuesday (2) or Thursday (4)
+    while (target.getDay() !== 2 && target.getDay() !== 4) {
+      target.setDate(target.getDate() + 1);
+    }
+
+    const yyyy = target.getFullYear();
+    const mm = String(target.getMonth() + 1).padStart(2, '0');
+    const dd = String(target.getDate()).padStart(2, '0');
+    const dateStr = `${yyyy}-${mm}-${dd}`;
+
+    const today = new Date();
+    const minStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
+    dateInput.min = minStr;
+    dateInput.value = dateStr;
+    dateInput.onchange = validatePickupDate;
+  }
+
+  function validatePickupDate() {
+    const dateInput = document.getElementById("pickupDate");
+    if (!dateInput.value) return;
+
+    const parts = dateInput.value.split("-");
+    const chosen = new Date(parts[0], parts[1] - 1, parts[2]);
+    const day = chosen.getDay();
+
+    if (day !== 2 && day !== 4) {
+      alert("⚠️ Pickup is available on Tuesdays and Thursdays only. Resetting to the next open day.");
+      initializeDatePicker();
+    }
   }
 
   function populatePickupTimes() {
     const timeSelect = document.getElementById("pickupTime");
     timeSelect.innerHTML = "";
     
-    // Generates 15-min slots between 8:00 AM and 11:00 AM
     let times = [];
     for (let hour = 8; hour <= 11; hour++) {
       let maxMin = (hour === 11) ? 0 : 45;
@@ -127,7 +170,6 @@
   }
 
   function fetchMenuData() {
-    // JSONP request to Google Apps Script Web App
     const script = document.createElement('script');
     script.src = `${APPS_SCRIPT_URL}?callback=handleMenuResponse`;
     document.body.appendChild(script);
@@ -138,7 +180,6 @@
       showStatus("Error loading menu: " + data.message, false);
       return;
     }
-
     menuData = data;
     populateCategories();
   }
@@ -172,7 +213,6 @@
       return;
     }
 
-    // Filter items matching selected category ID
     const filteredItems = menuData.items.filter(item => item.category_id === catId);
 
     if (filteredItems.length === 0) {
@@ -184,7 +224,7 @@
     filteredItems.forEach(item => {
       const opt = document.createElement("option");
       opt.value = item.id;
-      opt.textContent = item.name || item.item_name;
+      opt.textContent = item.name;
       itemSelect.appendChild(opt);
     });
 
@@ -204,7 +244,7 @@
     const selectedItem = menuData.items.find(item => item.id === itemId);
     if (!selectedItem) return;
 
-    // 1. Populate Variants / Sizes
+    // Populate Variants
     variantSelect.innerHTML = "";
     const variants = selectedItem.variants || [];
 
@@ -212,16 +252,14 @@
       const opt = document.createElement("option");
       opt.value = v.variant_id || v.id;
       
-      // Determine variant price safely
-      let price = v.default_price !== undefined ? v.default_price : 0;
-      if (v.stores && v.stores.length > 0 && v.stores[0].price !== undefined) {
-        price = v.stores[0].price;
-      }
-      
+      let price = (v.default_price !== undefined && v.default_price !== null) 
+        ? v.default_price 
+        : (v.stores && v.stores[0] ? v.stores[0].price : 0);
+        
       opt.dataset.price = price;
       
-      // Determine label name safely
-      let labelName = v.option1_value || v.name || selectedItem.name || "Standard";
+      let labelName = v.option1_value || v.name || "Standard";
+      opt.dataset.label = labelName;
       opt.textContent = `${labelName} ($${parseFloat(price).toFixed(2)})`;
       
       variantSelect.appendChild(opt);
@@ -229,7 +267,7 @@
 
     variantSelect.disabled = variants.length === 0;
 
-    // 2. Populate Modifiers / Add-ons
+    // Populate Modifiers
     populateModifiers(selectedItem);
 
     addToCartBtn.disabled = false;
@@ -241,7 +279,7 @@
 
     const itemModIds = item.modifier_ids || [];
     if (itemModIds.length === 0 || !menuData.modifiers) {
-      container.innerHTML = "<i>No add-ons available for this item.</i>";
+      container.innerHTML = "<i>No add-ons for this item.</i>";
       return;
     }
 
@@ -257,21 +295,23 @@
       groupDiv.className = "modifier-group";
 
       const title = document.createElement("strong");
-      title.textContent = mod.name + ": ";
+      title.textContent = mod.name + ":";
       groupDiv.appendChild(title);
 
-      const options = mod.options || mod.modifier_options || [];
+      const options = mod.modifier_options || mod.options || [];
       options.forEach(opt => {
         const label = document.createElement("label");
         const checkbox = document.createElement("input");
         checkbox.type = "checkbox";
         checkbox.className = "modifier-checkbox";
-        checkbox.value = opt.name;
-        checkbox.dataset.price = opt.price || 0;
+        checkbox.value = opt.name || opt.option_name;
+        
+        let optPrice = opt.price !== undefined ? opt.price : (opt.default_price || 0);
+        checkbox.dataset.price = optPrice;
 
-        let priceText = opt.price > 0 ? ` (+$${parseFloat(opt.price).toFixed(2)})` : "";
+        let priceText = optPrice > 0 ? ` (+$${parseFloat(optPrice).toFixed(2)})` : "";
         label.appendChild(checkbox);
-        label.appendChild(document.createTextNode(` ${opt.name}${priceText}`));
+        label.appendChild(document.createTextNode(` ${opt.name || opt.option_name}${priceText}`));
 
         groupDiv.appendChild(label);
       });
@@ -301,10 +341,9 @@
     const itemObj = menuData.items.find(i => i.id === itemId);
     const selectedVariantOpt = variantSelect.options[variantSelect.selectedIndex];
 
-    const variantName = selectedVariantOpt ? selectedVariantOpt.textContent : "";
+    const variantName = selectedVariantOpt ? selectedVariantOpt.dataset.label : "Standard";
     const variantPrice = selectedVariantOpt ? parseFloat(selectedVariantOpt.dataset.price || 0) : 0;
 
-    // Selected Modifiers
     let selectedMods = [];
     let modPriceTotal = 0;
 
@@ -315,7 +354,7 @@
     });
 
     const cartItem = {
-      name: itemObj.name || itemObj.item_name,
+      name: itemObj.name,
       variant: variantName,
       price: variantPrice + modPriceTotal,
       modifiers: selectedMods
@@ -324,7 +363,6 @@
     cart.push(cartItem);
     renderCart();
 
-    // Reset modifier checkboxes
     document.querySelectorAll(".modifier-checkbox").forEach(cb => cb.checked = false);
   }
 
@@ -333,7 +371,7 @@
     const cartTotal = document.getElementById("cartTotal");
 
     if (cart.length === 0) {
-      cartList.innerHTML = "<i>Your cart is empty.</i>";
+      cartList.innerHTML = "<i>Your order is empty.</i>";
       cartTotal.textContent = "0.00";
       return;
     }
@@ -346,7 +384,7 @@
       const div = document.createElement("div");
       div.className = "cart-item";
       
-      let modText = item.modifiers.length > 0 ? `<br><small>+ ${item.modifiers.join(", ")}</small>` : "";
+      let modText = item.modifiers.length > 0 ? `<br><small style="color:#94a3b8;">+ ${item.modifiers.join(", ")}</small>` : "";
       
       div.innerHTML = `
         <div>
@@ -354,7 +392,7 @@
         </div>
         <div>
           $${item.price.toFixed(2)} 
-          <button type="button" onclick="removeFromCart(${idx})" style="width:auto; padding: 2px 8px; margin-left: 8px; background: #dc3545;">✕</button>
+          <button type="button" onclick="removeFromCart(${idx})" style="width:auto; padding: 4px 8px; margin-left: 8px; background: #ef4444;">✕</button>
         </div>
       `;
       cartList.appendChild(div);
@@ -371,13 +409,23 @@
   function handleOrderSubmit(e) {
     e.preventDefault();
     if (cart.length === 0) {
-      showStatus("Please add at least one item to your cart before ordering.", false);
+      showStatus("Please add at least one item before placing your order.", false);
       return;
     }
 
+    const pDate = document.getElementById("pickupDate").value;
+    const pTime = document.getElementById("pickupTime").value;
+
+    lastOrderDetails = {
+      date: pDate,
+      time: pTime,
+      items: [...cart],
+      total: document.getElementById("cartTotal").textContent
+    };
+
     showStatus("✅ Order placed successfully! Payment is due on pickup.", true);
+    document.getElementById("calendarArea").style.display = "block";
     
-    // Clear state
     cart = [];
     renderCart();
     document.getElementById("order-form").reset();
@@ -389,6 +437,72 @@
     const status = document.getElementById("status");
     status.className = "status-msg " + (isSuccess ? "success" : "error");
     status.textContent = msg;
+  }
+
+  // --- Calendar Integration ---
+  function getOrderStartEndDates() {
+    if (!lastOrderDetails) return null;
+    const [year, month, day] = lastOrderDetails.date.split("-").map(Number);
+    
+    let [timeStr, period] = lastOrderDetails.time.split(" ");
+    let [hours, minutes] = timeStr.split(":").map(Number);
+    if (period === "PM" && hours < 12) hours += 12;
+    if (period === "AM" && hours === 12) hours = 0;
+
+    const startDate = new Date(year, month - 1, day, hours, minutes);
+    const endDate = new Date(startDate.getTime() + 15 * 60000); // 15 mins
+
+    return { startDate, endDate };
+  }
+
+  function addToGoogleCalendar() {
+    const dates = getOrderStartEndDates();
+    if (!dates) return;
+
+    const formatISO = d => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+    
+    const summaryList = lastOrderDetails.items.map(i => `${i.name} (${i.variant})`).join(", ");
+    const title = encodeURIComponent("☕ Coffee Express Order Pickup");
+    const details = encodeURIComponent(`Order Summary:\n${summaryList}\n\nTotal: $${lastOrderDetails.total}`);
+    const location = encodeURIComponent("Gem Community Arts Centre");
+
+    const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${formatISO(dates.startDate)}/${formatISO(dates.endDate)}&details=${details}&location=${location}`;
+    window.open(url, '_blank');
+  }
+
+  function downloadICSFile() {
+    const dates = getOrderStartEndDates();
+    if (!dates) return;
+
+    const formatISO = d => d.toISOString().replace(/-|:|\.\d\d\d/g, "");
+    const summaryList = lastOrderDetails.items.map(i => `${i.name} (${i.variant})`).join("\\n");
+
+    const icsData = [
+      "BEGIN:VCALENDAR",
+      "VERSION:2.0",
+      "PRODID:-//Coffee Express//Order Pickup//EN",
+      "BEGIN:VEVENT",
+      `SUMMARY:☕ Coffee Express Order Pickup`,
+      `DESCRIPTION:Order Summary:\\n${summaryList}\\nTotal: $${lastOrderDetails.total}`,
+      `LOCATION:Gem Community Arts Centre`,
+      `DTSTART:${formatISO(dates.startDate)}`,
+      `DTEND:${formatISO(dates.endDate)}`,
+      "BEGIN:VALARM",
+      "TRIGGER:-PT15M",
+      "ACTION:DISPLAY",
+      "DESCRIPTION:Pickup Coffee Express Order in 15 minutes",
+      "END:VALARM",
+      "END:VEVENT",
+      "END:VCALENDAR"
+    ].join("\r\n");
+
+    const blob = new Blob([icsData], { type: "text/calendar;charset=utf-8" });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = `Coffee_Express_Pickup_${lastOrderDetails.date}.ics`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 </script>
 </body>
