@@ -22,7 +22,7 @@
       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
       border: 1px solid #334155;
     }
-    .brand-header { text-align: center; margin-bottom: 20px; }
+    .brand-header { text-align: center; margin-bottom: 20px; }<img src="GEM_placeHolder_logo_V22.png" alt="Gemco Players" class="gemco-joint-logo">
     .gemco-joint-logo {
       width: 100%;
       max-width: 380px;
@@ -48,7 +48,7 @@
       font-weight: 600;
       margin-bottom: 16px;
     }
-    .acnc-tick-img {
+    .acnc-tick-img {<img src="ACNC-Registered-Charity-Logo_RGB.png" alt="ACNC Charity" class="acnc-tick-img">
       height: 48px;
       width: auto;
       background: #ffffff;
@@ -120,7 +120,7 @@
 
   <div class="order-card">
     <div class="brand-header">
-      <img src="GEM_placeHolder_logo_V2.jpg" alt="Gemco Players" class="gemco-joint-logo">
+      <img src="GEM_placeHolder_logo_V2.png" alt="Gemco Players" class="gemco-joint-logo">
       <h2>Coffee Express</h2>
     </div>
 
@@ -140,17 +140,39 @@
       </div>
 
       <div class="form-group">
-        <label for="coffeeType">Coffee / Drink Type</label>
-        <select id="coffeeType" name="coffeeType" required>
-          <option value="" data-price="0">Loading menu from Loyverse...</option>
+        <label for="categorySelect">Category</label>
+        <select id="categorySelect">
+          <option value="">-- Select Category --</option>
+          <option value="hot">Hot Drinks</option>
+          <option value="cold">Cold Drinks</option>
         </select>
       </div>
 
       <div class="form-group">
-        <label for="size">Size</label>
-        <select id="size" name="size" required>
-          <option value="Small (8oz)" data-price="0">Small (8oz)</option>
-          <option value="Large (12oz)" data-price="1.00">Large (12oz) (+ $1.00)</option>
+        <label for="coffeeType">Drink Item</label>
+        <select id="coffeeType" name="coffeeType" required disabled>
+          <option value="" data-price="0">-- Select Category First --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="variant">Variant / Size</label>
+        <select id="variant" name="variant" disabled>
+          <option value="" data-price="0">-- Select Drink First --</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="modifier1" id="mod1-label">Customization 1</label>
+        <select id="modifier1" name="modifier1">
+          <option value="None" data-price="0">None</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label for="modifier2" id="mod2-label">Customization 2</label>
+        <select id="modifier2" name="modifier2">
+          <option value="None" data-price="0">None</option>
         </select>
       </div>
 
@@ -158,28 +180,6 @@
         <label for="pickupTime">Pickup Time (8:00 AM – 11:00 AM)</label>
         <select id="pickupTime" name="pickupTime" required>
           <option value="">-- Select Pickup Time --</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="milk">Milk Choice</label>
-        <select id="milk" name="milk">
-          <option value="Full Cream" data-price="0">Full Cream</option>
-          <option value="Skim Milk" data-price="0">Skim Milk</option>
-          <option value="Oat Milk" data-price="0.70">Oat Milk (+ $0.70)</option>
-          <option value="Almond Milk" data-price="0.70">Almond Milk (+ $0.70)</option>
-          <option value="Soy Milk" data-price="0.70">Soy Milk (+ $0.70)</option>
-        </select>
-      </div>
-
-      <div class="form-group">
-        <label for="syrup">Syrup / Extra Shot</label>
-        <select id="syrup" name="syrup">
-          <option value="None" data-price="0">None</option>
-          <option value="Vanilla" data-price="0.70">Vanilla (+ $0.70)</option>
-          <option value="Caramel" data-price="0.70">Caramel (+ $0.70)</option>
-          <option value="Hazelnut" data-price="0.70">Hazelnut (+ $0.70)</option>
-          <option value="Extra Shot" data-price="0.70">Extra Espresso Shot (+ $0.70)</option>
         </select>
       </div>
 
@@ -203,28 +203,89 @@
 
   <script>
     let submitted = false;
+    let loyverseMenu = { hotDrinks: [], coldDrinks: [], modifiers: [] };
 
-    function renderLoyverseMenu(data) {
-      const select = document.getElementById("coffeeType");
-      select.innerHTML = '<option value="" data-price="0">-- Select Item --</option>';
+    function renderLoyverseData(data) {
+      if (data && data.status === "success") {
+        loyverseMenu = data;
+        
+        // Populate Modifiers from Loyverse
+        if (data.modifiers.length > 0) {
+          populateModifier("modifier1", "mod1-label", data.modifiers[0]);
+        }
+        if (data.modifiers.length > 1) {
+          populateModifier("modifier2", "mod2-label", data.modifiers[1]);
+        }
+      }
+    }
 
-      if (data && data.status === "success" && data.items.length > 0) {
-        data.items.forEach(item => {
+    function populateModifier(elementId, labelId, modifier) {
+      const select = document.getElementById(elementId);
+      const label = document.getElementById(labelId);
+      label.textContent = modifier.name;
+      select.innerHTML = '<option value="None" data-price="0">None</option>';
+      modifier.options.forEach(opt => {
+        const o = document.createElement("option");
+        o.value = opt.name;
+        o.dataset.price = opt.price;
+        o.textContent = `${opt.name} (${opt.price > 0 ? '+$' + opt.price.toFixed(2) : 'Free'})`;
+        select.appendChild(o);
+      });
+    }
+
+    document.getElementById("categorySelect").addEventListener("change", function() {
+      const cat = this.value;
+      const drinkSelect = document.getElementById("coffeeType");
+      const variantSelect = document.getElementById("variant");
+      
+      drinkSelect.innerHTML = '<option value="" data-price="0">-- Select Drink --</option>';
+      variantSelect.innerHTML = '<option value="" data-price="0">-- Select Drink First --</option>';
+      variantSelect.disabled = true;
+
+      const items = cat === "hot" ? loyverseMenu.hotDrinks : (cat === "cold" ? loyverseMenu.coldDrinks : []);
+      if (items.length > 0) {
+        drinkSelect.disabled = false;
+        items.forEach((item, index) => {
           const opt = document.createElement("option");
           opt.value = item.name;
-          opt.dataset.price = item.price;
-          opt.textContent = `${item.name} ($${item.price.toFixed(2)})`;
-          select.appendChild(opt);
+          opt.dataset.index = index;
+          opt.textContent = item.name;
+          drinkSelect.appendChild(opt);
         });
       } else {
-        select.innerHTML = '<option value="" data-price="0">No coffee items found</option>';
+        drinkSelect.disabled = true;
       }
       updateTotal();
-    }
+    });
+
+    document.getElementById("coffeeType").addEventListener("change", function() {
+      const cat = document.getElementById("categorySelect").value;
+      const items = cat === "hot" ? loyverseMenu.hotDrinks : loyverseMenu.coldDrinks;
+      const selectedIndex = this.options[this.selectedIndex]?.dataset.index;
+      const variantSelect = document.getElementById("variant");
+
+      variantSelect.innerHTML = '';
+      if (selectedIndex !== undefined && items[selectedIndex]) {
+        const item = items[selectedIndex];
+        if (item.variants && item.variants.length > 0) {
+          variantSelect.disabled = false;
+          item.variants.forEach(v => {
+            const opt = document.createElement("option");
+            opt.value = v.option_name;
+            opt.dataset.price = v.price;
+            opt.textContent = `${v.option_name} ($${v.price.toFixed(2)})`;
+            variantSelect.appendChild(opt);
+          });
+        }
+      } else {
+        variantSelect.disabled = true;
+      }
+      updateTotal();
+    });
 
     function fetchMenu() {
       const script = document.createElement("script");
-      script.src = "https://script.google.com/macros/s/AKfycbzQQCDOBJMU2YEXtekiww-12uXuoZLwOSRCXsoRDYFIf75uq8OEwK-S7sIW_0PAn-ZJ/exec?callback=renderLoyverseMenu";
+      script.src = "https://script.google.com/macros/s/AKfycbzQQCDOBJMU2YEXtekiww-12uXuoZLwOSRCXsoRDYFIf75uq8OEwK-S7sIW_0PAn-ZJ/exec?callback=renderLoyverseData";
       document.body.appendChild(script);
     }
 
@@ -244,23 +305,21 @@
     }
 
     function updateTotal() {
-      const coffee = document.getElementById("coffeeType");
-      const size = document.getElementById("size");
-      const milk = document.getElementById("milk");
-      const syrup = document.getElementById("syrup");
+      const variant = document.getElementById("variant");
+      const mod1 = document.getElementById("modifier1");
+      const mod2 = document.getElementById("modifier2");
 
       const total = 
-        parseFloat(coffee.options[coffee.selectedIndex]?.dataset.price || 0) +
-        parseFloat(size.options[size.selectedIndex]?.dataset.price || 0) +
-        parseFloat(milk.options[milk.selectedIndex]?.dataset.price || 0) +
-        parseFloat(syrup.options[syrup.selectedIndex]?.dataset.price || 0);
+        parseFloat(variant.options[variant.selectedIndex]?.dataset.price || 0) +
+        parseFloat(mod1.options[mod1.selectedIndex]?.dataset.price || 0) +
+        parseFloat(mod2.options[mod2.selectedIndex]?.dataset.price || 0);
 
       const formatted = `$${total.toFixed(2)}`;
       document.getElementById("order-total").textContent = formatted;
       document.getElementById("totalPriceInput").value = formatted;
     }
 
-    ["coffeeType", "size", "milk", "syrup"].forEach(id => {
+    ["variant", "modifier1", "modifier2"].forEach(id => {
       document.getElementById(id).addEventListener("change", updateTotal);
     });
 
