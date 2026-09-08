@@ -118,6 +118,13 @@
       border-radius: 8px;
       cursor: pointer;
     }
+    .btn-secondary {
+      background: #475569;
+      margin-bottom: 20px;
+    }
+    .btn-secondary:hover {
+      background: #64748b;
+    }
     button:disabled { background: #64748b; }
     .status-msg { margin-top: 15px; text-align: center; font-weight: 600; }
     .success { color: #4ade80; }
@@ -129,7 +136,7 @@
 
   <div class="order-card">
     <div class="brand-header">
-      <img src="<img src="GEM_placeHolder_logo_V22.png" alt="Gemco Players" class="gemco-joint-logo">" 
+      <img src="GEM_placeHolder_logo_V2.png" alt="Gemco Players" class="gemco-joint-logo">
       <h2>Coffee Express</h2>
     </div>
 
@@ -159,30 +166,50 @@
 
       <div class="form-group">
         <label for="coffeeType">Drink Item</label>
-        <select id="coffeeType" name="coffeeType" required disabled>
+        <select id="coffeeType">
           <option value="" data-price="0">-- Select Category First --</option>
         </select>
       </div>
 
       <div class="form-group">
         <label for="variant">Variant / Size</label>
-        <select id="variant" name="variant" disabled>
+        <select id="variant" disabled>
           <option value="" data-price="0">-- Select Drink First --</option>
         </select>
       </div>
 
       <div class="form-group">
         <label for="modifier1" id="mod1-label">Customization 1</label>
-        <select id="modifier1" name="modifier1">
+        <select id="modifier1">
           <option value="None" data-price="0">None</option>
         </select>
       </div>
 
       <div class="form-group">
         <label for="modifier2" id="mod2-label">Customization 2</label>
-        <select id="modifier2" name="modifier2">
+        <select id="modifier2">
           <option value="None" data-price="0">None</option>
         </select>
+      </div>
+
+      <div class="form-group">
+        <label for="itemQuantity">Quantity</label>
+        <input type="number" id="itemQuantity" min="1" max="10" value="1">
+      </div>
+
+      <button type="button" id="addToCartBtn" class="btn-secondary" onclick="addToCart()">Add Item to Order</button>
+
+      <!-- Order Summary Section -->
+      <div class="order-summary-container" style="margin-bottom: 20px; background: rgba(0, 0, 0, 0.2); padding: 15px; border-radius: 8px; border: 1px solid #334155;">
+        <h3 style="margin-top:0; font-size: 16px;">Order Summary</h3>
+        <div id="cartItemsList">
+          <p style="color: #aaa; font-size: 14px;">No items added yet.</p>
+        </div>
+        <hr style="border-color: rgba(255,255,255,0.1); margin: 12px 0;">
+        <div style="display: flex; justify-content: space-between; font-weight: bold; font-size: 16px;">
+          <span>Grand Total:</span>
+          <span id="grandTotal">$0.00</span>
+        </div>
       </div>
 
       <div class="form-group">
@@ -197,12 +224,8 @@
         <textarea id="notes" name="notes" rows="2" placeholder="e.g. Extra hot..."></textarea>
       </div>
 
+      <input type="hidden" id="cartDataInput" name="cartData" value="[]">
       <input type="hidden" id="totalPriceInput" name="totalPrice" value="$0.00">
-
-      <div class="total-box">
-        <span>Estimated Total:</span>
-        <span id="order-total">$0.00</span>
-      </div>
 
       <button type="submit" id="submit-btn">Place Order</button>
     </form>
@@ -213,12 +236,11 @@
   <script>
     let submitted = false;
     let loyverseMenu = { hotDrinks: [], coldDrinks: [], modifiers: [] };
+    let cart = [];
 
     function renderLoyverseData(data) {
       if (data && data.status === "success") {
         loyverseMenu = data;
-        
-        // Populate Modifiers from Loyverse
         if (data.modifiers.length > 0) {
           populateModifier("modifier1", "mod1-label", data.modifiers[0]);
         }
@@ -264,7 +286,6 @@
       } else {
         drinkSelect.disabled = true;
       }
-      updateTotal();
     });
 
     document.getElementById("coffeeType").addEventListener("change", function() {
@@ -289,8 +310,79 @@
       } else {
         variantSelect.disabled = true;
       }
-      updateTotal();
     });
+
+    function addToCart() {
+      const drinkSelect = document.getElementById('coffeeType');
+      const variantSelect = document.getElementById('variant');
+      const mod1 = document.getElementById('modifier1');
+      const mod2 = document.getElementById('modifier2');
+      const qty = parseInt(document.getElementById('itemQuantity').value) || 1;
+
+      if (!drinkSelect.value) {
+        alert("Please select a drink item.");
+        return;
+      }
+
+      const unitPrice = 
+        parseFloat(variantSelect.options[variantSelect.selectedIndex]?.dataset.price || 0) +
+        parseFloat(mod1.options[mod1.selectedIndex]?.dataset.price || 0) +
+        parseFloat(mod2.options[mod2.selectedIndex]?.dataset.price || 0);
+
+      const cartItem = {
+        id: Date.now(),
+        drink: drinkSelect.value,
+        variant: variantSelect.value || "Standard",
+        mod1: mod1.value,
+        mod2: mod2.value,
+        quantity: qty,
+        unitPrice: unitPrice,
+        totalPrice: unitPrice * qty
+      };
+
+      cart.push(cartItem);
+      renderCart();
+    }
+
+    function removeFromCart(id) {
+      cart = cart.filter(item => item.id !== id);
+      renderCart();
+    }
+
+    function renderCart() {
+      const listContainer = document.getElementById('cartItemsList');
+      const grandTotalEl = document.getElementById('grandTotal');
+
+      if (cart.length === 0) {
+        listContainer.innerHTML = `<p style="color: #aaa; font-size: 14px;">No items added yet.</p>`;
+        grandTotalEl.innerText = `$0.00`;
+        document.getElementById('totalPriceInput').value = "$0.00";
+        document.getElementById('cartDataInput').value = "[]";
+        return;
+      }
+
+      let total = 0;
+      listContainer.innerHTML = cart.map(item => {
+        total += item.totalPrice;
+        return `
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:rgba(255,255,255,0.05); padding:8px; border-radius:4px; font-size:14px;">
+            <div>
+              <strong>${item.quantity}x ${item.drink}</strong> (${item.variant})<br>
+              <small style="color:#cbd5e1;">${item.mod1 !== 'None' ? item.mod1 : ''} ${item.mod2 !== 'None' ? '| ' + item.mod2 : ''}</small>
+            </div>
+            <div style="text-align:right;">
+              <div>$${item.totalPrice.toFixed(2)}</div>
+              <button type="button" onclick="removeFromCart(${item.id})" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size:12px; padding:0; width:auto;">Remove</button>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      const formattedTotal = `$${total.toFixed(2)}`;
+      grandTotalEl.innerText = formattedTotal;
+      document.getElementById('totalPriceInput').value = formattedTotal;
+      document.getElementById('cartDataInput').value = JSON.stringify(cart);
+    }
 
     function fetchMenu() {
       const script = document.createElement("script");
@@ -313,111 +405,12 @@
       }
     }
 
-    function updateTotal() {
-      const variant = document.getElementById("variant");
-      const mod1 = document.getElementById("modifier1");
-      const mod2 = document.getElementById("modifier2");
-
-      const total = 
-        parseFloat(variant.options[variant.selectedIndex]?.dataset.price || 0) +
-        parseFloat(mod1.options[mod1.selectedIndex]?.dataset.price || 0) +
-        parseFloat(mod2.options[mod2.selectedIndex]?.dataset.price || 0);
-
-      const formatted = `$${total.toFixed(2)}`;
-      document.getElementById("order-total").textContent = formatted;
-      document.getElementById("totalPriceInput").value = formatted;
-    }
-
-    ["variant", "modifier1", "modifier2"].forEach(id => {
-      document.getElementById(id).addEventListener("change", updateTotal);
-    });
-<!-- Quantity & Add Item Button -->
-<div class="form-group">
-  <label for="itemQuantity">Quantity</label>
-  <input type="number" id="itemQuantity" min="1" max="10" value="1" class="form-control">
-</div>
-
-<button type="button" id="addToCartBtn" class="btn btn-secondary" onclick="addToCart()">Add Item to Order</button>
-
-<!-- Order Summary Section -->
-<div class="order-summary-container" style="margin-top: 20px; background: rgba(255, 255, 255, 0.05); padding: 15px; border-radius: 8px;">
-  <h3>Order Summary</h3>
-  <div id="cartItemsList">
-    <p style="color: #aaa;">No items added yet.</p>
-  </div>
-  <hr style="border-color: rgba(255,255,255,0.1);">
-  <div style="display: flex; justify-content: space-between; font-weight: bold;">
-    <span>Grand Total:</span>
-    <span id="grandTotal">$0.00</span>
-  </div>
-  let cart = [];
-
-function addToCart() {
-  const drinkSelect = document.getElementById('drinkItem');
-  const variantSelect = document.getElementById('variantSize');
-  const milkSelect = document.getElementById('milkSyrup');
-  const customSelect = document.getElementById('customization2');
-  const qty = parseInt(document.getElementById('itemQuantity').value) || 1;
-
-  if (!drinkSelect.value) {
-    alert("Please select a drink item.");
-    return;
-  }
-
-  // Calculate single item base price + extras
-  const itemPrice = calculateCurrentItemPrice(); 
-
-  const cartItem = {
-    id: Date.now(),
-    drink: drinkSelect.options[drinkSelect.selectedIndex].text,
-    variant: variantSelect.options[variantSelect.selectedIndex].text,
-    milk: milkSelect.options[milkSelect.selectedIndex].text,
-    custom: customSelect.options[customSelect.selectedIndex].text,
-    quantity: qty,
-    unitPrice: itemPrice,
-    totalPrice: itemPrice * qty
-  };
-
-  cart.push(cartItem);
-  renderCart();
-}
-
-function removeFromCart(id) {
-  cart = cart.filter(item => item.id !== id);
-  renderCart();
-}
-
-function renderCart() {
-  const listContainer = document.getElementById('cartItemsList');
-  const grandTotalEl = document.getElementById('grandTotal');
-
-  if (cart.length === 0) {
-    listContainer.innerHTML = `<p style="color: #aaa;">No items added yet.</p>`;
-    grandTotalEl.innerText = `$0.00`;
-    return;
-  }
-
-  let total = 0;
-  listContainer.innerHTML = cart.map(item => {
-    total += item.totalPrice;
-    return `
-      <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:rgba(0,0,0,0.2); padding:8px; border-radius:4px;">
-        <div>
-          <strong>${item.quantity}x ${item.drink}</strong> (${item.variant})<br>
-          <small>${item.milk} | ${item.custom}</small>
-        </div>
-        <div style="text-align:right;">
-          <div>$${item.totalPrice.toFixed(2)}</div>
-          <button type="button" onclick="removeFromCart(${item.id})" style="background:none; border:none; color:#ff4d4d; cursor:pointer; font-size:12px;">Remove</button>
-        </div>
-      </div>
-    `;
-  }).join('');
-
-  grandTotalEl.innerText = `$${total.toFixed(2)}`;
-}
-</div>
-    document.getElementById("order-form").addEventListener("submit", function() {
+    document.getElementById("order-form").addEventListener("submit", function(e) {
+      if (cart.length === 0) {
+        e.preventDefault();
+        alert("Please add at least one item to your order before placing it.");
+        return;
+      }
       submitted = true;
       const btn = document.getElementById("submit-btn");
       btn.disabled = true;
@@ -430,7 +423,8 @@ function renderCart() {
         status.className = "status-msg success";
         status.textContent = "✅ Order placed successfully! Payment is due on pickup.";
         document.getElementById("order-form").reset();
-        updateTotal();
+        cart = [];
+        renderCart();
         const btn = document.getElementById("submit-btn");
         btn.disabled = false;
         btn.textContent = "Place Order";
