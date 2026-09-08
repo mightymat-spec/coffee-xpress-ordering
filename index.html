@@ -5,22 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Coffee Express - Order</title>
 
-  <!-- Mobile Web App & Home Screen App Tile Meta Tags -->
+  <!-- Mobile Web App Meta Tags -->
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Coffee Express">
   <meta name="application-name" content="Coffee Express">
+  <meta name="theme-color" content="#121212">
 
-  <!-- Icons for iOS & Android Home Screen (Make sure you have an apple-touch-icon.png in your repo) -->
+  <!-- Web App Icon (Embedded SVG Favicon + Touch Icon) -->
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%23121212'/><text y='70' x='15' font-size='65'>☕</text></svg>">
   <link rel="apple-touch-icon" href="apple-touch-icon.png">
-  <link rel="icon" type="image/png" href="apple-touch-icon.png">
 
   <style>
     :root {
       --bg-color: #121212;
       --card-bg: #1e1e1e;
-      --accent: #14b8a6; /* Teal accent matching your patch */
+      --accent: #14b8a6;
       --accent-dark: #0f766e;
       --text-main: #f8fafc;
       --text-muted: #94a3b8;
@@ -75,7 +76,6 @@
       margin-top: 6px;
     }
 
-    /* Reorder Banner from your patch */
     .reorder-banner {
       display: none;
       background: var(--accent-dark);
@@ -87,7 +87,7 @@
       text-align: center;
     }
 
-    .reorder-btn {
+    .reorder-btn, .cal-btn {
       background: var(--accent);
       color: #042f2e;
       border: none;
@@ -97,6 +97,16 @@
       cursor: pointer;
       margin-top: 8px;
       font-size: 13px;
+    }
+
+    .cal-btn {
+      width: 100%;
+      background: #2a2a2a;
+      color: #14b8a6;
+      border: 1px solid #14b8a6;
+      margin-top: 10px;
+      padding: 10px;
+      font-size: 14px;
     }
 
     .form-group { margin-bottom: 18px; }
@@ -122,6 +132,14 @@
 
     input:focus, select:focus, textarea:focus {
       border-color: var(--accent);
+    }
+
+    .formatted-date-label {
+      font-size: 13px;
+      color: var(--accent);
+      margin-top: 5px;
+      font-weight: 500;
+      min-height: 18px;
     }
 
     .btn-add {
@@ -181,14 +199,12 @@
 
 <div class="container">
   <header>
-    <!-- Replace with your actual logo URL or local path -->
     <img src="logo.png" alt="Coffee Express Logo" onerror="this.style.display='none'">
     <h2>Coffee Express</h2>
     <div class="payment-notice">💳 Payment on Pick Up</div>
     <div class="hours-info">📅 Open Tuesday & Thursday mornings (8:00 AM – 11:00 AM) during school terms.</div>
   </header>
 
-  <!-- Re-order Previous Items Banner -->
   <div id="reorderBanner" class="reorder-banner">
     <div id="reorderSummary" style="font-size: 13px;"></div>
     <button type="button" class="reorder-btn" onclick="loadPreviousOrder()">⚡ Load Last Order</button>
@@ -206,13 +222,16 @@
     <div style="display: flex; gap: 10px;">
       <div class="form-group" style="flex: 1;">
         <label>Date</label>
-        <input type="date" id="pickupDate" name="pickupDate" required>
+        <input type="date" id="pickupDate" name="pickupDate" onchange="updateFormattedDate()" required>
+        <div id="formattedDateDisplay" class="formatted-date-label"></div>
       </div>
       <div class="form-group" style="flex: 1;">
         <label>Time</label>
         <input type="time" id="pickupTime" name="pickupTime" required>
       </div>
     </div>
+
+    <button type="button" class="cal-btn" onclick="addToCalendar()">📅 Add Pickup to Device Calendar</button>
 
     <div class="divider"></div>
 
@@ -252,7 +271,6 @@
   let cart = [];
   let submitted = false;
   
-  // Simulated Loyverse/Menu Items to populate the dropdown
   const items = [
     { name: "Espresso", variants: [{ option_name: "Standard", price: 3.50 }] },
     { name: "Flat White", variants: [{ option_name: "Small", price: 4.50 }, { option_name: "Large", price: 5.50 }] },
@@ -299,11 +317,72 @@
         opt.textContent = `${labelName} ($${v.price.toFixed(2)})`;
         variantSelect.appendChild(opt);
       });
-      // Pre-select Large by default
       variantSelect.selectedIndex = defaultSelectIndex;
     } else {
       variantSelect.disabled = true;
     }
+  }
+
+  function updateFormattedDate() {
+    const val = document.getElementById('pickupDate').value;
+    const display = document.getElementById('formattedDateDisplay');
+    if (!val) { display.innerText = ''; return; }
+    
+    const parts = val.split('-');
+    const date = new Date(parts[0], parts[1] - 1, parts[2]);
+    
+    const dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    const dayName = dayNames[date.getDay()];
+    const monthName = monthNames[date.getMonth()];
+    const dayNum = date.getDate();
+    
+    function getOrdinal(n) {
+      if (n > 3 && n < 21) return 'th';
+      switch (n % 10) {
+        case 1:  return "st";
+        case 2:  return "nd";
+        case 3:  return "rd";
+        default: return "th";
+      }
+    }
+    display.innerText = `${dayName} ${dayNum}${getOrdinal(dayNum)} ${monthName}`;
+  }
+
+  function addToCalendar() {
+    const pDate = document.getElementById('pickupDate').value;
+    const pTime = document.getElementById('pickupTime').value || '08:00';
+    
+    if (!pDate) {
+      alert("Please select a date first.");
+      return;
+    }
+
+    const cleanDate = pDate.replace(/-/g, '');
+    const cleanTime = pTime.replace(':', '') + '00';
+    const startIso = `${cleanDate}T${cleanTime}`;
+
+    const icsContent = [
+      'BEGIN:VCALENDAR',
+      'VERSION:2.0',
+      'PRODID:-//Coffee Express//Order Pickup//EN',
+      'BEGIN:VEVENT',
+      `SUMMARY:☕ Coffee Express Pickup`,
+      `DESCRIPTION:Coffee order pickup for ${document.getElementById('customerName').value || 'Customer'}`,
+      `DTSTART:${startIso}`,
+      `DTEND:${startIso}`,
+      'END:VEVENT',
+      'END:VCALENDAR'
+    ].join('\r\n');
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = window.URL.createObjectURL(blob);
+    link.setAttribute('download', 'coffee-pickup.ics');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   }
 
   function addToCart() {
@@ -323,7 +402,7 @@
       customizations: mods
     });
 
-    document.getElementById('modifiersContainer').value = ""; // Clear notes
+    document.getElementById('modifiersContainer').value = "";
     renderCart();
   }
 
@@ -360,11 +439,11 @@
 
   function checkSavedCustomerData() {
     const savedName = localStorage.getItem('coffee_customer_name');
+    const savedTime = localStorage.getItem('coffee_preferred_time');
     const savedCart = localStorage.getItem('coffee_last_cart');
 
-    if (savedName) {
-      document.getElementById('customerName').value = savedName;
-    }
+    if (savedName) document.getElementById('customerName').value = savedName;
+    if (savedTime) document.getElementById('pickupTime').value = savedTime;
 
     if (savedCart) {
       try {
@@ -383,7 +462,6 @@
     if (savedCart) {
       try {
         cart = JSON.parse(savedCart);
-        // Refresh IDs for modern timestamping
         cart.forEach(item => item.id = Date.now() + Math.random());
         renderCart();
       } catch (e) {}
@@ -396,16 +474,18 @@
       return false;
     }
 
-    // Save customer name and cart to Local Storage for future visits
     const customer = document.getElementById("customerName").value;
+    const time = document.getElementById("pickupTime").value;
+
     if (customer) localStorage.setItem('coffee_customer_name', customer);
+    if (time) localStorage.setItem('coffee_preferred_time', time);
     if (cart.length > 0) localStorage.setItem('coffee_last_cart', JSON.stringify(cart));
 
     submitted = true;
     const btn = document.getElementById("submit-btn");
     btn.disabled = true;
     btn.innerText = "Submitting Order...";
-    return true; // allows form submission
+    return true;
   }
 
   function completeSubmission() {
@@ -414,8 +494,8 @@
     cart = [];
     renderCart();
     
-    // Auto-fill date back to today
     document.getElementById('pickupDate').valueAsDate = new Date();
+    updateFormattedDate();
     checkSavedCustomerData();
 
     const btn = document.getElementById("submit-btn");
@@ -423,8 +503,9 @@
     btn.innerText = "Submit Order";
   }
 
-  // Init
+  // Initialization
   document.getElementById('pickupDate').valueAsDate = new Date();
+  updateFormattedDate();
   fetchMenu();
   checkSavedCustomerData();
 </script>
