@@ -94,19 +94,6 @@
       border-radius: 8px;
       font-size: 15px;
     }
-    .total-box {
-      background: #0f172a;
-      border: 1px solid #334155;
-      padding: 14px;
-      border-radius: 8px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-weight: 700;
-      font-size: 18px;
-      color: #38bdf8;
-      margin-bottom: 20px;
-    }
     button {
       width: 100%;
       background: #2563eb;
@@ -136,7 +123,7 @@
 
   <div class="order-card">
     <div class="brand-header">
-      <img src="GEM_placeHolder_logo_V2.png" alt="Gemco Players" class="gemco-joint-logo">
+      <img src="GEM_placeHolder_logo_V22.png" alt="Gemco Players" class="gemco-joint-logo">
       <h2>Coffee Express</h2>
     </div>
 
@@ -166,7 +153,7 @@
 
       <div class="form-group">
         <label for="coffeeType">Drink Item</label>
-        <select id="coffeeType">
+        <select id="coffeeType" disabled>
           <option value="" data-price="0">-- Select Category First --</option>
         </select>
       </div>
@@ -178,16 +165,12 @@
         </select>
       </div>
 
-   <!-- Single Customizations / Add-ons Group -->
-<div class="form-group">
-  <label>Customizations / Add-ons</label>
-  <div id="modifiersContainer" style="background: #0f172a; border: 1px solid #475569; padding: 12px; border-radius: 8px; max-height: 180px; overflow-y: auto;">
-    <p style="color: #cbd5e1; margin: 0; font-size: 14px;">Select a drink to view available add-ons.</p>
-  </div>
-</div>
-          <option value="None" data-price="0">None</option>
-        </select>
-    
+      <!-- Multi-select Customizations Group -->
+      <div class="form-group">
+        <label>Customizations / Add-ons</label>
+        <div id="modifiersContainer" style="background: #0f172a; border: 1px solid #475569; padding: 12px; border-radius: 8px; max-height: 180px; overflow-y: auto;">
+          <p style="color: #cbd5e1; margin: 0; font-size: 14px;">Select a drink to view available add-ons.</p>
+        </div>
       </div>
 
       <div class="form-group">
@@ -236,93 +219,135 @@
     let loyverseMenu = { hotDrinks: [], coldDrinks: [], modifiers: [] };
     let cart = [];
 
+    function populateModifiers(modifiers) {
+      const container = document.getElementById("modifiersContainer");
+      container.innerHTML = "";
+
+      if (!modifiers || modifiers.length === 0) {
+        container.innerHTML = '<p style="color: #cbd5e1; margin: 0; font-size: 14px;">No add-ons available.</p>';
+        return;
+      }
+
+      modifiers.forEach(modGroup => {
+        const groupHeader = document.createElement("div");
+        groupHeader.style.cssText = "font-weight: 600; color: #38bdf8; margin: 8px 0 4px 0; font-size: 13px;";
+        groupHeader.textContent = modGroup.name;
+        container.appendChild(groupHeader);
+
+        modGroup.options.forEach(opt => {
+          const label = document.createElement("label");
+          label.style.cssText = "display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 14px; color: #f8fafc; margin-bottom: 6px; cursor: pointer;";
+          
+          const priceText = opt.price > 0 ? ` (+$${opt.price.toFixed(2)})` : " (Free)";
+          
+          label.innerHTML = `
+            <input type="checkbox" class="modifier-checkbox" value="${opt.name}" data-price="${opt.price}" style="width: auto; cursor: pointer;">
+            <span>${opt.name}${priceText}</span>
+          `;
+          container.appendChild(label);
+        });
+      });
+    }
+
     function renderLoyverseData(data) {
       if (data && data.status === "success") {
         loyverseMenu = data;
-        if (data.modifiers.length > 0) {
-          populateModifier("modifier1", "mod1-label", data.modifiers[0]);
-        }
-        if (data.modifiers.length > 1) {
-          populateModifier("modifier2", "mod2-label", data.modifiers[1]);
+        if (data.modifiers && data.modifiers.length > 0) {
+          populateModifiers(data.modifiers);
         }
       }
     }
 
-   // Function to populate all available modifiers in one multi-select checkbox list
-function populateModifiers(modifiers) {
-  const container = document.getElementById("modifiersContainer");
-  container.innerHTML = "";
-
-  if (!modifiers || modifiers.length === 0) {
-    container.innerHTML = '<p style="color: #cbd5e1; margin: 0; font-size: 14px;">No add-ons available.</p>';
-    return;
-  }
-
-  modifiers.forEach(modGroup => {
-    modGroup.options.forEach(opt => {
-      const label = document.createElement("label");
-      label.style.cssText = "display: flex; align-items: center; gap: 8px; font-weight: normal; font-size: 14px; color: #f8fafc; margin-bottom: 6px; cursor: pointer;";
+    document.getElementById("categorySelect").addEventListener("change", function() {
+      const cat = this.value;
+      const drinkSelect = document.getElementById("coffeeType");
+      const variantSelect = document.getElementById("variant");
       
-      const priceText = opt.price > 0 ? ` (+$${opt.price.toFixed(2)})` : " (Free)";
-      
-      label.innerHTML = `
-        <input type="checkbox" class="modifier-checkbox" value="${opt.name}" data-price="${opt.price}" style="width: auto; cursor: pointer;">
-        <span>${opt.name}${priceText}</span>
-      `;
-      container.appendChild(label);
+      drinkSelect.innerHTML = '<option value="" data-price="0">-- Select Drink --</option>';
+      variantSelect.innerHTML = '<option value="" data-price="0">-- Select Drink First --</option>';
+      variantSelect.disabled = true;
+
+      const items = cat === "hot" ? loyverseMenu.hotDrinks : (cat === "cold" ? loyverseMenu.coldDrinks : []);
+      if (items.length > 0) {
+        drinkSelect.disabled = false;
+        items.forEach((item, index) => {
+          const opt = document.createElement("option");
+          opt.value = item.name;
+          opt.dataset.index = index;
+          opt.textContent = item.name;
+          drinkSelect.appendChild(opt);
+        });
+      } else {
+        drinkSelect.disabled = true;
+      }
     });
-  });
-}
 
-// Updated Loyverse Menu Loader
-function renderLoyverseData(data) {
-  if (data && data.status === "success") {
-    loyverseMenu = data;
-    if (data.modifiers && data.modifiers.length > 0) {
-      populateModifiers(data.modifiers);
+    document.getElementById("coffeeType").addEventListener("change", function() {
+      const cat = document.getElementById("categorySelect").value;
+      const items = cat === "hot" ? loyverseMenu.hotDrinks : loyverseMenu.coldDrinks;
+      const selectedIndex = this.options[this.selectedIndex]?.dataset.index;
+      const variantSelect = document.getElementById("variant");
+
+      variantSelect.innerHTML = '';
+      if (selectedIndex !== undefined && items[selectedIndex]) {
+        const item = items[selectedIndex];
+        if (item.variants && item.variants.length > 0) {
+          variantSelect.disabled = false;
+          item.variants.forEach(v => {
+            const opt = document.createElement("option");
+            opt.value = v.option_name;
+            opt.dataset.price = v.price;
+            opt.textContent = `${v.option_name} ($${v.price.toFixed(2)})`;
+            variantSelect.appendChild(opt);
+          });
+        }
+      } else {
+        variantSelect.disabled = true;
+      }
+    });
+
+    function addToCart() {
+      const drinkSelect = document.getElementById('coffeeType');
+      const variantSelect = document.getElementById('variant');
+      const qty = parseInt(document.getElementById('itemQuantity').value) || 1;
+
+      if (!drinkSelect.value) {
+        alert("Please select a drink item.");
+        return;
+      }
+
+      const variantPrice = parseFloat(variantSelect.options[variantSelect.selectedIndex]?.dataset.price || 0);
+
+      const selectedMods = [];
+      let modifiersTotalPrice = 0;
+
+      document.querySelectorAll('.modifier-checkbox:checked').forEach(cb => {
+        selectedMods.push(cb.value);
+        modifiersTotalPrice += parseFloat(cb.dataset.price || 0);
+      });
+
+      const unitPrice = variantPrice + modifiersTotalPrice;
+
+      const cartItem = {
+        id: Date.now(),
+        drink: drinkSelect.value,
+        variant: variantSelect.value || "Standard",
+        customizations: selectedMods.length > 0 ? selectedMods.join(", ") : "None",
+        quantity: qty,
+        unitPrice: unitPrice,
+        totalPrice: unitPrice * qty
+      };
+
+      cart.push(cartItem);
+      renderCart();
+
+      // Clear selections for next item
+      document.querySelectorAll('.modifier-checkbox').forEach(cb => cb.checked = false);
     }
-  }
-}
 
-// Updated addToCart function calculating selected checkboxes
-function addToCart() {
-  const drinkSelect = document.getElementById('coffeeType');
-  const variantSelect = document.getElementById('variant');
-  const qty = parseInt(document.getElementById('itemQuantity').value) || 1;
-
-  if (!drinkSelect.value) {
-    alert("Please select a drink item.");
-    return;
-  }
-
-  const variantPrice = parseFloat(variantSelect.options[variantSelect.selectedIndex]?.dataset.price || 0);
-
-  const selectedMods = [];
-  let modifiersTotalPrice = 0;
-
-  document.querySelectorAll('.modifier-checkbox:checked').forEach(cb => {
-    selectedMods.push(cb.value);
-    modifiersTotalPrice += parseFloat(cb.dataset.price || 0);
-  });
-
-  const unitPrice = variantPrice + modifiersTotalPrice;
-
-  const cartItem = {
-    id: Date.now(),
-    drink: drinkSelect.value,
-    variant: variantSelect.value || "Standard",
-    customizations: selectedMods.length > 0 ? selectedMods.join(", ") : "None",
-    quantity: qty,
-    unitPrice: unitPrice,
-    totalPrice: unitPrice * qty
-  };
-
-  cart.push(cartItem);
-  renderCart();
-
-  // Reset checkboxes
-  document.querySelectorAll('.modifier-checkbox').forEach(cb => cb.checked = false);
-}
+    function removeFromCart(id) {
+      cart = cart.filter(item => item.id !== id);
+      renderCart();
     }
 
     function renderCart() {
@@ -344,7 +369,7 @@ function addToCart() {
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; background:rgba(255,255,255,0.05); padding:8px; border-radius:4px; font-size:14px;">
             <div>
               <strong>${item.quantity}x ${item.drink}</strong> (${item.variant})<br>
-              <small style="color:#cbd5e1;">${item.mod1 !== 'None' ? item.mod1 : ''} ${item.mod2 !== 'None' ? '| ' + item.mod2 : ''}</small>
+              <small style="color:#cbd5e1;">Add-ons: ${item.customizations}</small>
             </div>
             <div style="text-align:right;">
               <div>$${item.totalPrice.toFixed(2)}</div>
