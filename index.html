@@ -1,339 +1,485 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Coffee Express - Order Online</title>
   <style>
     :root {
-      --bg-color: #121212;
-      --card-bg: #1e1e1e;
-      --accent: #d4a373;
-      --text-main: #fefae0;
-      --text-muted: #a0a0a0;
-      --input-bg: #2a2a2a;
-      --border-color: #333333;
-      --btn-hover: #faedcd;
+      --primary: #4a2c20;
+      --secondary: #d4a373;
+      --bg: #faedcd;
+      --surface: #ffffff;
+      --text: #333333;
+      --accent: #e76f51;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
 
     body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      background-color: var(--bg-color);
-      color: var(--text-main);
-      margin: 0;
-      padding: 20px;
+      background-color: var(--bg);
+      color: var(--text);
+      padding-bottom: 80px;
+    }
+
+    header {
+      background-color: var(--primary);
+      color: white;
+      padding: 1.5rem;
+      text-align: center;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
       display: flex;
-      justify-content: center;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    header img.logo {
+      height: 60px;
+      width: auto;
+      border-radius: 8px;
     }
 
     .container {
-      width: 100%;
-      max-width: 480px;
-      background-color: var(--card-bg);
-      padding: 24px;
-      border-radius: 16px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.5);
-      border: 1px solid var(--border-color);
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 0 15px;
     }
 
-    h1 {
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 20px;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 15px;
       text-align: center;
-      color: var(--accent);
-      margin-top: 0;
-      font-size: 24px;
-      letter-spacing: 1px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
     }
 
-    .form-group {
-      margin-bottom: 16px;
+    .card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     }
 
-    label {
-      display: block;
-      font-size: 13px;
-      color: var(--text-muted);
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    input, select, textarea {
+    .card img {
       width: 100%;
-      padding: 12px;
-      background-color: var(--input-bg);
-      border: 1px solid var(--border-color);
+      height: 140px;
+      object-fit: cover;
       border-radius: 8px;
-      color: #fff;
-      font-size: 15px;
-      box-sizing: border-box;
-      outline: none;
-    }
-
-    input:focus, select:focus, textarea:focus {
-      border-color: var(--accent);
-    }
-
-    .divider {
-      height: 1px;
-      background-color: var(--border-color);
-      margin: 24px 0;
-    }
-
-    .cart-item {
-      background-color: var(--input-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 8px;
-      padding: 12px;
       margin-bottom: 10px;
+    }
+
+    .card h3 {
+      color: var(--primary);
+      margin-bottom: 5px;
+    }
+
+    .card .price {
+      font-weight: bold;
+      color: var(--accent);
+    }
+
+    /* Modal Styles */
+    .modal {
+      display: none;
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.6);
+      justify-content: center;
+      align-items: center;
+      z-index: 1000;
+    }
+
+    .modal-content {
+      background: var(--surface);
+      width: 90%;
+      max-width: 450px;
+      border-radius: 12px;
+      padding: 20px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+
+    .modal-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
+      margin-bottom: 15px;
     }
 
-    .cart-item-details {
-      flex-grow: 1;
-    }
-
-    .cart-item-title {
-      font-weight: bold;
-      color: var(--text-main);
-    }
-
-    .cart-item-sub {
-      font-size: 12px;
-      color: var(--text-muted);
-      margin-top: 2px;
-    }
-
-    .cart-item-price {
-      font-weight: bold;
-      color: var(--accent);
-      margin-right: 12px;
-    }
-
-    .btn-remove {
-      background: transparent;
-      border: none;
-      color: #ff6b6b;
-      font-size: 18px;
+    .close-btn {
+      font-size: 1.5rem;
       cursor: pointer;
-      padding: 0 4px;
+      background: none;
+      border: none;
     }
 
-    button.btn-primary {
+    .form-group {
+      margin-bottom: 15px;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    select, input[type="text"], input[type="time"], input[type="date"] {
       width: 100%;
-      background-color: var(--accent);
-      color: #121212;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .btn {
+      background: var(--primary);
+      color: white;
       border: none;
-      padding: 14px;
-      border-radius: 8px;
-      font-size: 16px;
-      font-weight: bold;
+      padding: 12px 20px;
+      border-radius: 6px;
+      width: 100%;
+      font-size: 1rem;
       cursor: pointer;
-      transition: background-color 0.2s;
       margin-top: 10px;
     }
 
-    button.btn-primary:hover {
-      background-color: var(--btn-hover);
+    .btn:hover {
+      background: #362017;
     }
 
-    button.btn-secondary {
-      width: 100%;
-      background-color: transparent;
-      color: var(--accent);
-      border: 1px solid var(--accent);
-      padding: 10px;
-      border-radius: 8px;
-      font-size: 14px;
+    /* Cart Bar */
+    .cart-bar {
+      position: fixed;
+      bottom: 0; left: 0; width: 100%;
+      background: var(--primary);
+      color: white;
+      padding: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.15);
+    }
+
+    .cart-bar button {
+      background: var(--accent);
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
       cursor: pointer;
-      margin-top: 8px;
-    }
-
-    #statusMessage {
-      margin-top: 16px;
-      text-align: center;
-      font-size: 14px;
-      font-weight: bold;
-    }
-
-    .empty-cart {
-      text-align: center;
-      color: var(--text-muted);
-      font-size: 14px;
-      padding: 12px 0;
     }
   </style>
 </head>
 <body>
 
-<div class="container">
-  <h1>☕ COFFEE EXPRESS</h1>
+  <header>
+    <img src="logo.png" alt="Coffee Express Logo" class="logo" onerror="this.style.display='none'">
+    <h1>Coffee Express</h1>
+    <p>Fresh Brewed Coffee & Refreshments</p>
+  </header>
 
-  <form id="orderForm">
-    <div class="form-group">
-      <label for="customerName">Name</label>
-      <input type="text" id="customerName" placeholder="Your name" required>
-    </div>
+  <div class="container">
+    <h2 style="margin-bottom: 15px; color: var(--primary);">Select Your Drink</h2>
+    <div class="menu-grid" id="menuGrid"></div>
+  </div>
 
-    <div style="display: flex; gap: 10px;">
-      <div class="form-group" style="flex: 1;">
-        <label for="pickupDate">Date</label>
-        <input type="date" id="pickupDate" required>
+  <!-- Customization Modal -->
+  <div class="modal" id="itemModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">Customize Drink</h3>
+        <button class="close-btn" onclick="closeModal()">&times;</button>
       </div>
 
-      <div class="form-group" style="flex: 1;">
-        <label for="pickupTime">Time</label>
-        <input type="time" id="pickupTime" required>
+      <div class="form-group">
+        <label for="sizeSelect">Size / Option</label>
+        <select id="sizeSelect" onchange="updateModalPrice()"></select>
       </div>
-    </div>
 
-    <div class="divider"></div>
-
-    <div class="form-group">
-      <label for="drinkSelect">Drink Item</label>
-      <select id="drinkSelect">
-        <option value="Espresso" data-price="3.50">Espresso - $3.50</option>
-        <option value="Flat White" data-price="4.50">Flat White - $4.50</option>
-        <option value="Cappuccino" data-price="4.50">Cappuccino - $4.50</option>
-        <option value="Latte" data-price="4.50">Latte - $4.50</option>
-        <option value="Long Black" data-price="4.00">Long Black - $4.00</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label for="drinkVariant">Size / Milk Option</label>
-      <select id="drinkVariant">
-        <option value="Regular Full Cream">Regular (Full Cream)</option>
-        <option value="Regular Skim">Regular (Skim)</option>
-        <option value="Large Oat (+0.50)">Large Oat Milk</option>
-        <option value="Large Almond (+0.50)">Large Almond Milk</option>
-      </select>
-    </div>
-
-    <div class="form-group">
-      <label for="customizations">Custom Notes</label>
-      <input type="text" id="customizations" placeholder="e.g. Extra hot, 1 sugar">
-    </div>
-
-    <button type="button" class="btn-secondary" onclick="addToCart()">+ Add Drink to Order</button>
-
-    <div class="divider"></div>
-
-    <label>Your Order</label>
-    <div id="cartList">
-      <div class="empty-cart">No items added yet.</div>
-    </div>
-
-    <div class="form-group" style="margin-top: 16px;">
-      <label for="notes">Special Order Instructions</label>
-      <textarea id="notes" rows="2" placeholder="Leave at pickup counter"></textarea>
-    </div>
-
-    <button type="submit" class="btn-primary" id="submitBtn">Submit Order to POS</button>
-  </form>
-
-  <div id="statusMessage"></div>
-</div>
-
-<script>
-  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQQCDOBJMU2YEXtekiww-12uXuoZLwOSRCXsoRDYFIf75uq8OEwK-S7sIW_0PAn-ZJ/exec";
-  let cart = [];
-
-  document.getElementById('pickupDate').valueAsDate = new Date();
-
-  function addToCart() {
-    const drinkSelect = document.getElementById('drinkSelect');
-    const drinkName = drinkSelect.value;
-    const price = parseFloat(drinkSelect.options[drinkSelect.selectedIndex].getAttribute('data-price'));
-    const variant = document.getElementById('drinkVariant').value;
-    const customizations = document.getElementById('customizations').value;
-
-    cart.push({
-      drink: drinkName,
-      variant: variant,
-      quantity: 1,
-      unitPrice: price,
-      customizations: customizations
-    });
-
-    renderCart();
-    document.getElementById('customizations').value = '';
-  }
-
-  function renderCart() {
-    const cartList = document.getElementById('cartList');
-    if (cart.length === 0) {
-      cartList.innerHTML = '<div class="empty-cart">No items added yet.</div>';
-      return;
-    }
-
-    cartList.innerHTML = cart.map((item, index) => `
-      <div class="cart-item">
-        <div class="cart-item-details">
-          <div class="cart-item-title">${item.drink}</div>
-          <div class="cart-item-sub">${item.variant}${item.customizations ? ' • ' + item.customizations : ''}</div>
-        </div>
-        <div class="cart-item-price">$${item.unitPrice.toFixed(2)}</div>
-        <button type="button" class="btn-remove" onclick="removeItem(${index})">✕</button>
+      <div class="form-group">
+        <label for="milkSelect">Milk Preference</label>
+        <select id="milkSelect">
+          <option value="Full Cream">Full Cream</option>
+          <option value="Skim Milk">Skim Milk</option>
+          <option value="Oat Milk (+$0.50)">Oat Milk (+$0.50)</option>
+          <option value="Almond Milk (+$0.50)">Almond Milk (+$0.50)</option>
+          <option value="Soy Milk (+$0.50)">Soy Milk (+$0.50)</option>
+        </select>
       </div>
-    `).join('');
-  }
 
-  function removeItem(index) {
-    cart.splice(index, 1);
-    renderCart();
-  }
+      <div class="form-group">
+        <label for="sugarSelect">Sugar / Sweetener</label>
+        <select id="sugarSelect">
+          <option value="No Sugar">No Sugar</option>
+          <option value="1 Sugar">1 Sugar</option>
+          <option value="2 Sugars">2 Sugars</option>
+          <option value="Equal">Equal</option>
+        </select>
+      </div>
 
-  document.getElementById('orderForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-    if (cart.length === 0) {
-      alert("Please add at least one drink to your order.");
-      return;
-    }
+      <div class="form-group">
+        <label for="customNotes">Special Instructions</label>
+        <input type="text" id="customNotes" placeholder="e.g. Extra hot, decaf..." />
+      </div>
 
-    const submitBtn = document.getElementById('submitBtn');
-    const statusMsg = document.getElementById('statusMessage');
-    submitBtn.disabled = true;
-    statusMsg.style.color = "var(--text-main)";
-    statusMsg.innerText = "Submitting order to Loyverse...";
+      <button class="btn" onclick="addToCart()">Add to Cart - $<span id="modalPrice">0.00</span></button>
+    </div>
+  </div>
 
-    const formData = new FormData();
-    formData.append('customerName', document.getElementById('customerName').value);
-    formData.append('pickupDate', document.getElementById('pickupDate').value);
-    formData.append('pickupTime', document.getElementById('pickupTime').value);
-    formData.append('notes', document.getElementById('notes').value);
-    formData.append('cartData', JSON.stringify(cart));
+  <!-- Cart Checkout Modal -->
+  <div class="modal" id="cartModal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Your Order</h3>
+        <button class="close-btn" onclick="closeCart()">&times;</button>
+      </div>
 
-    fetch(SCRIPT_URL, {
-      method: 'POST',
-      body: formData
-    })
-    .then(res => res.json())
-    .then(data => {
-      if (data.status === 'success') {
-        let msg = "Order Sent to Loyverse!";
-        if (data.rewardApplied) {
-          msg += " 🎁 Free Drink Reward Applied!";
-        }
-        statusMsg.style.color = "#4caf50";
-        statusMsg.innerText = msg;
-        cart = [];
-        renderCart();
-        document.getElementById('orderForm').reset();
-        document.getElementById('pickupDate').valueAsDate = new Date();
-      } else {
-        throw new Error(data.message);
+      <div id="cartItemsList" style="margin-bottom: 15px;"></div>
+
+      <div class="form-group">
+        <label for="customerName">Your Name</label>
+        <input type="text" id="customerName" required placeholder="Enter your full name" />
+      </div>
+
+      <div class="form-group">
+        <label for="pickupDate">Pickup Date</label>
+        <input type="date" id="pickupDate" required />
+      </div>
+
+      <div class="form-group">
+        <label for="pickupTime">Pickup Time</label>
+        <input type="time" id="pickupTime" required />
+      </div>
+
+      <div class="form-group">
+        <label for="orderNotes">Order Notes</label>
+        <input type="text" id="orderNotes" placeholder="Additional details..." />
+      </div>
+
+      <button class="btn" onclick="submitOrder()">Submit Order</button>
+    </div>
+  </div>
+
+  <!-- Bottom Cart Bar -->
+  <div class="cart-bar">
+    <div>
+      <span id="cartCount">0</span> Items | Total: $<span id="cartTotal">0.00</span>
+    </div>
+    <button onclick="openCart()">View Order</button>
+  </div>
+
+  <script>
+    // Configured Apps Script Web App URL
+    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwc0u-s3d-E5H583lZ5-I5pYJ6K5S15I3k1s1S3j/exec";
+
+    const menu = [
+      {
+        name: "Espresso",
+        img: "https://images.unsplash.com/photo-1510591509098-f4fdc6d0ff04?auto=format&fit=crop&w=400&q=80",
+        variants: [
+          { name: "Single Shot", price: 3.50 },
+          { name: "Double Shot", price: 4.20 }
+        ]
+      },
+      {
+        name: "Flat White",
+        img: "https://images.unsplash.com/photo-1577968897966-3d4325b36b61?auto=format&fit=crop&w=400&q=80",
+        variants: [
+          { name: "Small", price: 4.50 },
+          { name: "Medium", price: 5.20 },
+          { name: "Large", price: 5.80 }
+        ]
+      },
+      {
+        name: "Cappuccino",
+        img: "https://images.unsplash.com/photo-1534778101976-62847782c213?auto=format&fit=crop&w=400&q=80",
+        variants: [
+          { name: "Small", price: 4.50 },
+          { name: "Medium", price: 5.20 },
+          { name: "Large", price: 5.80 }
+        ]
+      },
+      {
+        name: "Latte",
+        img: "https://images.unsplash.com/photo-1561882468-9110e03e0f78?auto=format&fit=crop&w=400&q=80",
+        variants: [
+          { name: "Small", price: 4.50 },
+          { name: "Medium", price: 5.20 },
+          { name: "Large", price: 5.80 }
+        ]
+      },
+      {
+        name: "Long Black",
+        img: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?auto=format&fit=crop&w=400&q=80",
+        variants: [
+          { name: "Small", price: 4.00 },
+          { name: "Medium", price: 4.80 }
+        ]
       }
-    })
-    .catch(err => {
-      statusMsg.style.color = "#ff6b6b";
-      statusMsg.innerText = "Error: " + err.message;
-    })
-    .finally(() => {
-      submitBtn.disabled = false;
-    });
-  });
-</script>
+    ];
+
+    let currentItem = null;
+    let cart = [];
+
+    // Render Menu Items
+    function renderMenu() {
+      const grid = document.getElementById("menuGrid");
+      grid.innerHTML = "";
+      menu.forEach((item, index) => {
+        const card = document.createElement("div");
+        card.className = "card";
+        card.onclick = () => openModal(index);
+        card.innerHTML = `
+          <img src="${item.img}" alt="${item.name}">
+          <h3>${item.name}</h3>
+          <div class="price">From $${item.variants[0].price.toFixed(2)}</div>
+        `;
+        grid.appendChild(card);
+      });
+    }
+
+    function openModal(index) {
+      currentItem = menu[index];
+      document.getElementById("modalTitle").innerText = currentItem.name;
+      const sizeSelect = document.getElementById("sizeSelect");
+      sizeSelect.innerHTML = "";
+      
+      currentItem.variants.forEach(v => {
+        const opt = document.createElement("option");
+        opt.value = v.name;
+        opt.dataset.price = v.price;
+        opt.textContent = `${v.name} ($${v.price.toFixed(2)})`;
+        sizeSelect.appendChild(opt);
+      });
+
+      updateModalPrice();
+      document.getElementById("itemModal").style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("itemModal").style.display = "none";
+    }
+
+    function updateModalPrice() {
+      const sizeSelect = document.getElementById("sizeSelect");
+      const selected = sizeSelect.options[sizeSelect.selectedIndex];
+      const basePrice = parseFloat(selected.dataset.price || 0);
+      document.getElementById("modalPrice").innerText = basePrice.toFixed(2);
+    }
+
+    function addToCart() {
+      const sizeSelect = document.getElementById("sizeSelect");
+      const selectedVariant = sizeSelect.options[sizeSelect.selectedIndex].value;
+      const price = parseFloat(sizeSelect.options[sizeSelect.selectedIndex].dataset.price);
+      const milk = document.getElementById("milkSelect").value;
+      const sugar = document.getElementById("sugarSelect").value;
+      const notes = document.getElementById("customNotes").value;
+
+      let extra = 0;
+      if (milk.includes("+$0.50")) extra += 0.50;
+
+      const cartItem = {
+        drink: currentItem.name,
+        variant: selectedVariant,
+        unitPrice: price + extra,
+        quantity: 1,
+        customizations: `Milk: ${milk}, Sugar: ${sugar}${notes ? ', Note: ' + notes : ''}`
+      };
+
+      cart.push(cartItem);
+      updateCartBar();
+      closeModal();
+    }
+
+    function updateCartBar() {
+      let count = 0;
+      let total = 0;
+      cart.forEach(item => {
+        count += item.quantity;
+        total += item.unitPrice * item.quantity;
+      });
+      document.getElementById("cartCount").innerText = count;
+      document.getElementById("cartTotal").innerText = total.toFixed(2);
+    }
+
+    function openCart() {
+      const list = document.getElementById("cartItemsList");
+      if (cart.length === 0) {
+        list.innerHTML = "<p>Your cart is empty.</p>";
+      } else {
+        list.innerHTML = cart.map(i => `
+          <div style="border-bottom: 1px solid #eee; padding: 8px 0;">
+            <strong>${i.drink}</strong> (${i.variant}) - $${i.unitPrice.toFixed(2)}<br>
+            <small>${i.customizations}</small>
+          </div>
+        `).join("");
+      }
+
+      // Pre-fill today's date
+      document.getElementById("pickupDate").value = new Date().toISOString().split('T')[0];
+      document.getElementById("cartModal").style.display = "flex";
+    }
+
+    function closeCart() {
+      document.getElementById("cartModal").style.display = "none";
+    }
+
+    function submitOrder() {
+      const name = document.getElementById("customerName").value;
+      const date = document.getElementById("pickupDate").value;
+      const time = document.getElementById("pickupTime").value;
+      const notes = document.getElementById("orderNotes").value;
+
+      if (!name || !date || !time) {
+        alert("Please complete Name, Date, and Time.");
+        return;
+      }
+
+      if (cart.length === 0) {
+        alert("Your cart is empty.");
+        return;
+      }
+
+      const formData = new URLSearchParams();
+      formData.append("customerName", name);
+      formData.append("pickupDate", date);
+      formData.append("pickupTime", time);
+      formData.append("notes", notes);
+      formData.append("cartData", JSON.stringify(cart));
+
+      fetch(APPS_SCRIPT_URL, {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "success") {
+          alert(data.rewardApplied ? "Order Submitted! You earned a FREE 6th coffee reward!" : "Order Submitted Successfully!");
+          cart = [];
+          updateCartBar();
+          closeCart();
+        } else {
+          alert("Error placing order: " + data.message);
+        }
+      })
+      .catch(err => {
+        alert("Network or Server error submitting order.");
+        console.error(err);
+      });
+    }
+
+    renderMenu();
+  </script>
 </body>
 </html>
