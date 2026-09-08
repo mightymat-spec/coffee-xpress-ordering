@@ -22,14 +22,39 @@
       box-shadow: 0 10px 25px rgba(0,0,0,0.3);
       border: 1px solid #334155;
     }
-    .brand-header {
+   <div class="brand-header">
+      <img src="https://static.wixstatic.com/media/a95f92_f6eb05f013144a2b97bebf956ae53526~mv2.png" alt="Gemco Players Logo" class="brand-logo" style="max-width: 180px; height: auto; display: block; margin: 0 auto 12px auto;">
+      <h2>Coffee Express</h2>
+    </div>
+.charity-banner {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      background: #162e21;
+      border: 1px solid #22c55e;
+      color: #4ade80;
+      padding: 10px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      text-align: left;
+    }
+    <div class="charity-banner">
+      <img src="https://static.wixstatic.com/media/a95f92_e4c84a0d9be44983a54a7bc9ba3c4033~mv2.png" alt="ACNC Registered Charity Tick" style="height: 32px; width: auto; flex-shrink: 0;">
+      <span>All proceeds support the Gem Community Arts Centre</span>
+    </div>
       text-align: center;
       margin-bottom: 20px;
     }
-    .brand-logo-svg {
-      width: 80px;
-      height: 80px;
-      margin-bottom: 10px;
+    .brand-logo {
+      max-width: 160px;
+      height: auto;
+      margin-bottom: 12px;
+      display: block;
+      margin-left: auto;
+      margin-right: auto;
     }
     h2 {
       margin: 0 0 6px 0;
@@ -50,6 +75,16 @@
       font-weight: 600;
       margin-bottom: 16px;
       text-align: center;
+    }
+    .charity-banner svg {
+      width: 16px;
+      height: 16px;
+      fill: none;
+      stroke: #4ade80;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      flex-shrink: 0;
     }
     .payment-notice {
       background: #0284c7;
@@ -121,18 +156,13 @@
 
   <div class="order-card">
     <div class="brand-header">
-      <svg class="brand-logo-svg" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-        <path d="M18 8h1a4 4 0 0 1 0 8h-1"></path>
-        <path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"></path>
-        <line x1="6" y1="1" x2="6" y2="4"></line>
-        <line x1="10" y1="1" x2="10" y2="4"></line>
-        <line x1="14" y1="1" x2="14" y2="4"></line>
-      </svg>
+      <img src="https://www.gemcoplayers.org/uploads/1/3/3/0/133036660/published/gemco-logo.png" alt="Gemco Players Logo" class="brand-logo" onerror="this.onerror=null; this.src='https://www.gemcoplayers.org/uploads/1/3/3/0/133036660/gemco-logo-header.png';">
       <h2>Coffee Express</h2>
     </div>
 
     <div class="charity-banner">
-      <span>✔️</span> All proceeds support the Gem Community Arts Centre
+      <svg viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"></polyline></svg>
+      <span>All proceeds support the Gem Community Arts Centre</span>
     </div>
 
     <div class="payment-notice">
@@ -240,19 +270,19 @@
       try {
         const res = await fetch(APPS_SCRIPT_URL).then(r => r.json());
 
-        if (res.status === "success" && res.items) {
+        if (res.status === "success" && res.items && res.items.length > 0) {
           menuItems = res.items;
           select.innerHTML = '<option value="" data-price="0">-- Select Drink / Item --</option>';
           res.items.forEach(item => {
             const opt = document.createElement("option");
             opt.value = item.name;
             opt.dataset.price = item.price || 0;
-            opt.textContent = item.price ? `${item.name} ($${parseFloat(item.price).toFixed(2)})` : item.name;
+            opt.textContent = item.price && parseFloat(item.price) > 0 ? `${item.name} ($${parseFloat(item.price).toFixed(2)})` : item.name;
             select.appendChild(opt);
           });
           if (status) status.textContent = "";
         } else {
-          throw new Error(res.message || "Failed to parse options");
+          throw new Error(res.message || "No items returned");
         }
       } catch (err) {
         console.error(err);
