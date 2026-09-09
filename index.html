@@ -661,7 +661,7 @@ function handleOrderSubmit(e) {
     return;
   }
 
-  lastOrderDetails = {
+  var orderPayload = {
     customerName: custName,
     date: pDate,
     time: pTime,
@@ -670,18 +670,40 @@ function handleOrderSubmit(e) {
     total: document.getElementById("cartTotal").textContent
   };
 
-  saveLastOrder(custName, cart.slice());
+  var submitBtn = document.getElementById("submit-btn");
+  submitBtn.disabled = true;
+  submitBtn.textContent = "Placing Order...";
 
-  showStatus("Order placed successfully! Payment is due on pickup.", true);
-  document.getElementById("calendarArea").style.display = "block";
+  fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    body: JSON.stringify(orderPayload)
+  })
+    .then(function(res) { return res.json(); })
+    .then(function(result) {
+      if (result.status !== "success") {
+        throw new Error(result.message || "Order could not be saved.");
+      }
 
-  cart = [];
-  renderCart();
-  document.getElementById("order-form").reset();
-  initializeDatePicker();
-  populatePickupTimes();
-  resetVariantAndModifiers();
-  loadLastOrderUI();
+      lastOrderDetails = orderPayload;
+      saveLastOrder(custName, cart.slice());
+
+      showStatus("Order placed successfully! Payment is due on pickup.", true);
+      document.getElementById("calendarArea").style.display = "block";
+      cart = [];
+      renderCart();
+      document.getElementById("order-form").reset();
+      initializeDatePicker();
+      populatePickupTimes();
+      resetVariantAndModifiers();
+      loadLastOrderUI();
+    })
+    .catch(function(err) {
+      showStatus("Sorry, we couldn't send your order. Please try again or let staff know. (" + err.message + ")", false);
+    })
+    .finally(function() {
+      submitBtn.disabled = false;
+      submitBtn.textContent = "Place Order";
+    });
 }
 
 function showStatus(msg, isSuccess) {
