@@ -1,4 +1,4 @@
-var LOYVERSE_TOKEN = "7859de88d19d420682fe1783ab6193fd";
+var LOYVERSE_TOKEN = PropertiesService.getScriptProperties().getProperty("LOYVERSE_TOKEN");
 
 function doGet(e) {
   var callback = e && e.parameter && e.parameter.callback;
