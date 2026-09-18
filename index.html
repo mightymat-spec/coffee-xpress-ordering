@@ -285,8 +285,10 @@ return null;
 
 function buildFinalMenu(apiData) {
 var buckets = { hot: [], cold: [], tea: [] };
+var hasApiItems = apiData && Array.isArray(apiData.items) && apiData.items.length;
 
-if (apiData && Array.isArray(apiData.items) && apiData.items.length) {
+if (hasApiItems) {
+// LIVE: show ONLY what's in Loyverse.
 var catNameById = {};
 (apiData.categories || []).forEach(function(c) { catNameById[c.id] = c.name; });
 apiData.items.forEach(function(item) {
@@ -295,16 +297,14 @@ var catName = catNameById[item.category_id] || "";
 var bucket = classifyBucket(item.name) || classifyBucket(catName);
 if (bucket) buckets[bucket].push(item);
 });
-}
-
+} else {
+// OFFLINE FALLBACK ONLY: use the built-in menu so the page still works
+// if Loyverse can't be reached. Not merged when Loyverse data is present.
 ["hot", "cold", "tea"].forEach(function(b) {
-var localItems = LOCAL_MENU.items.filter(function(i) { return i.category_id === b; });
-var existingNames = {};
-buckets[b].forEach(function(i) { existingNames[(i.name || "").toLowerCase()] = true; });
-localItems.forEach(function(li) {
-if (!existingNames[li.name.toLowerCase()]) buckets[b].push(li);
+LOCAL_MENU.items.filter(function(i) { return i.category_id === b; })
+.forEach(function(li) { buckets[b].push(li); });
 });
-});
+}
 
 var finalItems = [];
 ["hot", "cold", "tea"].forEach(function(b) {
@@ -320,10 +320,9 @@ var finalCategories = [
 { id: "tea", name: "🍵 Tea" }
 ];
 
-var finalModifiers = LOCAL_MENU.modifiers;
-if (apiData && apiData.modifiers && apiData.modifiers.length) {
-finalModifiers = apiData.modifiers.concat(LOCAL_MENU.modifiers);
-}
+var finalModifiers = (hasApiItems && apiData.modifiers && apiData.modifiers.length)
+? apiData.modifiers
+: LOCAL_MENU.modifiers;
 
 return { categories: finalCategories, items: finalItems, modifiers: finalModifiers };
 }
