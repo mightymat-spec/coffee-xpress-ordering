@@ -38,6 +38,15 @@ button:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
 .closed-banner h3 { margin: 0 0 6px; color: #fca5a5; font-size: 18px; }
 .closed-banner p { margin: 0; font-size: 14px; color: #fee2e2; }
 
+.announce-banner { display: none; background: #1e3a5f; color: #dbeafe; border: 1px solid #3b82f6; border-radius: 12px; padding: 14px 18px; margin-bottom: 20px; font-size: 14px; }
+.announce-banner strong { color: #93c5fd; margin-right: 6px; }
+
+.links-card h3 { margin: 0 0 10px; font-size: 16px; }
+.links-list { display: flex; flex-direction: column; gap: 8px; }
+.links-list a { display: block; text-decoration: none; background: #0f172a; border: 1px solid #334155; border-radius: 8px; padding: 12px 14px; color: #e2e8f0; font-weight: 600; font-size: 14px; }
+.links-list a:hover { border-color: #38bdf8; color: #38bdf8; }
+.links-list a span { float: right; color: #64748b; font-weight: normal; }
+
 .calendar-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
 .calendar-btn { background: #059669; font-size: 14px; padding: 12px; }
 .calendar-btn:hover { background: #047857; }
@@ -73,6 +82,10 @@ button:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
 <div id="closedBanner" class="closed-banner">
 <h3>&#128564; Online ordering is closed</h3>
 <p id="closedBannerMsg">Carriage Coffee Express isn't taking online orders right now. Please check back on our next open day.</p>
+</div>
+
+<div id="announceBanner" class="announce-banner">
+<strong>&#128226; Notice</strong><span id="announceBannerMsg"></span>
 </div>
 
 <div class="card">
@@ -181,6 +194,11 @@ Grand Total: $<span id="cartTotal">0.00</span>
 <h3 style="margin-top:0;">&#128241; Get the App on Your Phone</h3>
 <p>Scan this QR code, or tap our NFC point-of-sale sign, to open Coffee Express and add it to your home screen for fast reordering next time.</p>
 <img id="qrCodeImg" alt="QR code to install Coffee Express" class="qr-image">
+</div>
+
+<div id="linksCard" class="card links-card" style="display:none;">
+<h3>&#128197; What's on &amp; more</h3>
+<div id="linksList" class="links-list"></div>
 </div>
 
 <div class="card charity-card">
@@ -420,7 +438,11 @@ populateCategories();
 window.handleMenuResponse = function(data) {
 clearTimeout(timeoutHandle);
 if (data && typeof data.storeOpen !== "undefined") {
-applyStoreStatus(data.storeOpen !== false, data.storeMessage || "");
+applyStoreStatus(data.storeOpen !== false);
+}
+if (data) {
+applyAnnouncement(data.announcement || "");
+renderQuickLinks(data.links || []);
 }
 if (data && data.status === "error") {
 menuData = buildFinalMenu(null);
@@ -434,10 +456,9 @@ populateCategories();
 document.body.appendChild(script);
 }
 
-function applyStoreStatus(isOpen, message) {
+function applyStoreStatus(isOpen) {
 storeOpen = isOpen;
 var banner = document.getElementById("closedBanner");
-var bannerMsg = document.getElementById("closedBannerMsg");
 var submitBtn = document.getElementById("submit-btn");
 var addBtn = document.getElementById("add-to-cart-btn");
 
@@ -445,12 +466,43 @@ if (isOpen) {
 banner.style.display = "none";
 if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Place Order"; }
 } else {
-if (message) bannerMsg.textContent = message;
 banner.style.display = "block";
 if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Ordering Closed"; }
 if (addBtn) addBtn.disabled = true;
 window.scrollTo({ top: 0, behavior: "smooth" });
 }
+}
+
+function applyAnnouncement(text) {
+var banner = document.getElementById("announceBanner");
+var msg = document.getElementById("announceBannerMsg");
+text = (text || "").trim();
+if (text) {
+msg.textContent = " " + text;
+banner.style.display = "block";
+} else {
+banner.style.display = "none";
+}
+}
+
+function renderQuickLinks(links) {
+var card = document.getElementById("linksCard");
+var list = document.getElementById("linksList");
+list.innerHTML = "";
+if (!links || !links.length) {
+card.style.display = "none";
+return;
+}
+links.forEach(function(link) {
+if (!link || !link.url) return;
+var a = document.createElement("a");
+a.href = link.url;
+a.target = "_blank";
+a.rel = "noopener noreferrer";
+a.innerHTML = (link.label || link.url) + "<span>&#8599;</span>";
+list.appendChild(a);
+});
+card.style.display = list.children.length ? "block" : "none";
 }
 
 function populateCategories() {
@@ -797,7 +849,8 @@ body: JSON.stringify(orderPayload)
 .then(function(result) {
 if (result.status !== "success") {
 if (result.closed) {
-applyStoreStatus(false, result.message || "");
+applyStoreStatus(false);
+if (result.message) applyAnnouncement(result.message);
 }
 throw new Error(result.message || "Order could not be saved.");
 }

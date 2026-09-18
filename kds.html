@@ -93,7 +93,7 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 <span class="spacer"></span>
 <span id="livePill" class="pill">Connecting…</span>
 <div class="store-toggle">
-<span>Front end:</span>
+<span>Ordering:</span>
 <span id="storeState" class="store-state">—</span>
 <button id="storeSwitch" class="switch-btn" onclick="toggleStore()">…</button>
 </div>
@@ -101,9 +101,9 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 
 <div class="wrap">
 <div class="store-toggle" style="margin-bottom:14px;">
-<label for="storeMsg" style="font-size:13px; color:#cbd5e1;">Closed message shown to customers:</label>
-<input type="text" id="storeMsg" class="msg-input" placeholder="e.g. Closed today — back Thursday!">
-<button class="small-btn" onclick="saveStoreMessage()">Save message</button>
+<label for="storeMsg" style="font-size:13px; color:#cbd5e1;">Notice on the order page (leave blank for none):</label>
+<input type="text" id="storeMsg" class="msg-input" placeholder="e.g. Closed next Tue & Thu — back Fri!">
+<button class="small-btn" onclick="saveStoreMessage()">Save notice</button>
 </div>
 
 <div class="section-title">Active orders (<span id="activeCount">0</span>)</div>
@@ -127,7 +127,7 @@ var POLL_MS = 15000;
 var PIN = "";
 var orders = [];
 var storeOpen = true;
-var storeMessage = "";
+var announcement = "";
 var seenRows = {};        // rows we've already displayed (for "fresh" highlight)
 var firstLoadDone = false;
 var showCompleted = false;
@@ -215,7 +215,7 @@ function fetchStatus() {
 jsonp(APPS_SCRIPT_URL + "?action=status", function(ok, data) {
 if (ok && data) {
 storeOpen = data.storeOpen !== false;
-storeMessage = data.storeMessage || "";
+announcement = data.announcement || data.storeMessage || "";
 renderStore();
 }
 });
@@ -442,21 +442,20 @@ render();
 
 function toggleStore() {
 var next = !storeOpen;
-var msg = document.getElementById("storeMsg").value;
-setStore(next, msg);
+setStore(next, document.getElementById("storeMsg").value);
 }
 
 function saveStoreMessage() {
 setStore(storeOpen, document.getElementById("storeMsg").value);
 }
 
-function setStore(open, message) {
-postAction({ action: "setStatus", open: open, message: message }, function(ok, res) {
+function setStore(open, ann) {
+postAction({ action: "setStatus", open: open, announcement: ann }, function(ok, res) {
 if (ok) {
 storeOpen = !!res.storeOpen;
-storeMessage = res.storeMessage || "";
+announcement = res.announcement || "";
 renderStore();
-} else { alert("Couldn't change store status. Try again."); }
+} else { alert("Couldn't update. Try again."); }
 });
 }
 
@@ -464,16 +463,16 @@ function renderStore() {
 var state = document.getElementById("storeState");
 var sw = document.getElementById("storeSwitch");
 var msg = document.getElementById("storeMsg");
-if (document.activeElement !== msg) msg.value = storeMessage;
+if (document.activeElement !== msg) msg.value = announcement;
 if (storeOpen) {
-state.textContent = "OPEN";
+state.textContent = "ON";
 state.className = "store-state open";
-sw.textContent = "Close ordering";
+sw.textContent = "Freeze ordering";
 sw.className = "switch-btn to-close";
 } else {
-state.textContent = "CLOSED";
+state.textContent = "FROZEN";
 state.className = "store-state closed";
-sw.textContent = "Reopen ordering";
+sw.textContent = "Resume ordering";
 sw.className = "switch-btn to-open";
 }
 }
