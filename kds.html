@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Coffee Express - Kitchen Display</title>
+<meta name="theme-color" content="#c2410c">
+<link rel="icon" href="icon-192.png" type="image/png">
+<style>
+* { box-sizing: border-box; }
+body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 0; background: #0b1220; color: #f8fafc; }
+
+/* Top bar */
+.topbar { position: sticky; top: 0; z-index: 20; background: #111c33; border-bottom: 1px solid #334155; padding: 10px 14px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+.topbar h1 { font-size: 17px; margin: 0; display: flex; align-items: center; gap: 8px; }
+.spacer { flex: 1; }
+.pill { font-size: 12px; padding: 4px 10px; border-radius: 999px; background: #1e293b; color: #cbd5e1; border: 1px solid #334155; }
+.pill.live { color: #6ee7b7; }
+
+/* Store toggle */
+.store-toggle { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 8px 12px; }
+.store-state { font-weight: 700; font-size: 14px; }
+.store-state.open { color: #6ee7b7; }
+.store-state.closed { color: #fca5a5; }
+.switch-btn { border: none; border-radius: 8px; padding: 8px 14px; font-weight: 700; cursor: pointer; color: #fff; }
+.switch-btn.to-close { background: #b91c1c; }
+.switch-btn.to-open { background: #059669; }
+.msg-input { padding: 8px 10px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #f8fafc; font-size: 13px; min-width: 180px; }
+.small-btn { border: none; border-radius: 8px; padding: 8px 10px; background: #2563eb; color: #fff; font-weight: 600; cursor: pointer; font-size: 13px; }
+.link-btn { background: none; border: none; color: #93c5fd; cursor: pointer; font-size: 13px; text-decoration: underline; }
+
+.wrap { padding: 14px; }
+.section-title { font-size: 13px; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; margin: 6px 2px 10px; }
+
+.board { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+
+.order { background: #1e293b; border: 1px solid #334155; border-left: 6px solid #64748b; border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 10px; }
+.order.soon { border-left-color: #f59e0b; }
+.order.overdue { border-left-color: #ef4444; }
+.order.fresh { animation: flash 1.2s ease-out 3; }
+@keyframes flash { 0%,100% { box-shadow: 0 0 0 0 rgba(56,189,248,0); } 50% { box-shadow: 0 0 0 3px rgba(56,189,248,0.7); } }
+
+.order-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.cust { font-size: 18px; font-weight: 800; }
+.pickup { font-size: 13px; color: #cbd5e1; text-align: right; }
+.count { font-size: 22px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.count.ok { color: #6ee7b7; }
+.count.soon { color: #fbbf24; }
+.count.overdue { color: #f87171; }
+
+.items { list-style: none; margin: 0; padding: 0; }
+.items li { padding: 6px 0; border-bottom: 1px dashed #334155; font-size: 15px; line-height: 1.35; }
+.items li:last-child { border-bottom: none; }
+.mods { color: #93c5fd; font-size: 13px; }
+
+.instructions { background: #0f172a; border: 1px solid #3f3f13; color: #fde68a; border-radius: 8px; padding: 8px 10px; font-size: 13px; }
+.meta { font-size: 12px; color: #94a3b8; }
+.contact { display: flex; gap: 8px; flex-wrap: wrap; }
+.contact a { flex: 1; text-align: center; text-decoration: none; padding: 8px; border-radius: 8px; font-size: 13px; font-weight: 600; }
+.call { background: #0e7490; color: #fff; }
+.sms { background: #4338ca; color: #fff; }
+
+.done-btn { border: none; border-radius: 8px; padding: 12px; background: #059669; color: #fff; font-weight: 800; font-size: 15px; cursor: pointer; margin-top: 2px; }
+.done-btn:active { opacity: 0.7; }
+.undo-btn { border: none; border-radius: 8px; padding: 8px; background: #475569; color: #fff; font-weight: 600; font-size: 13px; cursor: pointer; }
+
+.empty { text-align: center; color: #64748b; padding: 40px 10px; }
+.order.completed { opacity: 0.65; border-left-color: #334155; }
+
+/* PIN gate */
+.gate { max-width: 340px; margin: 60px auto; background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 24px; text-align: center; }
+.gate h2 { margin-top: 0; }
+.gate input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #f8fafc; font-size: 18px; text-align: center; letter-spacing: 4px; margin: 12px 0; }
+.gate button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #2563eb; color: #fff; font-weight: 700; cursor: pointer; }
+.gate .err { color: #fca5a5; font-size: 13px; min-height: 18px; }
+</style>
+</head>
+<body>
+
+<!-- PIN gate -->
+<div id="gate" class="gate">
+<h2>☕ Kitchen Display</h2>
+<p style="color:#94a3b8; font-size:14px;">Enter the staff PIN to view live orders.</p>
+<input type="password" id="pinInput" inputmode="numeric" placeholder="PIN" autocomplete="off">
+<div class="err" id="gateErr"></div>
+<button onclick="submitPin()">Open Board</button>
+</div>
+
+<!-- Board -->
+<div id="app" style="display:none;">
+<div class="topbar">
+<h1>☕ Coffee Express — Orders</h1>
+<span class="spacer"></span>
+<span id="livePill" class="pill">Connecting…</span>
+<div class="store-toggle">
+<span>Front end:</span>
+<span id="storeState" class="store-state">—</span>
+<button id="storeSwitch" class="switch-btn" onclick="toggleStore()">…</button>
+</div>
+</div>
+
+<div class="wrap">
+<div class="store-toggle" style="margin-bottom:14px;">
+<label for="storeMsg" style="font-size:13px; color:#cbd5e1;">Closed message shown to customers:</label>
+<input type="text" id="storeMsg" class="msg-input" placeholder="e.g. Closed today — back Thursday!">
+<button class="small-btn" onclick="saveStoreMessage()">Save message</button>
+</div>
+
+<div class="section-title">Active orders (<span id="activeCount">0</span>)</div>
+<div id="board" class="board"></div>
+<div id="emptyActive" class="empty" style="display:none;">No active orders right now. ✅</div>
+
+<div style="margin:22px 0 6px;">
+<button class="link-btn" id="toggleCompleted" onclick="toggleCompleted()">Show completed today ▾</button>
+</div>
+<div id="completedWrap" style="display:none;">
+<div class="section-title">Completed today</div>
+<div id="completedBoard" class="board"></div>
+</div>
+</div>
+</div>
+
+<script>
+var APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzQQCDOBJMU2YEXtekiww-12uXuoZLwOSRCXsoRDYFIf75uq8OEwK-S7sIW_0PAn-ZJ/exec";
+var POLL_MS = 15000;
+
+var PIN = "";
+var orders = [];
+var storeOpen = true;
+var storeMessage = "";
+var seenRows = {};        // rows we've already displayed (for "fresh" highlight)
+var firstLoadDone = false;
+var showCompleted = false;
+var pollTimer = null;
+var tickTimer = null;
+
+/* ---------- PIN gate ---------- */
+window.addEventListener("DOMContentLoaded", function() {
+var saved = "";
+try { saved = localStorage.getItem("coffeeKdsPin") || ""; } catch (e) {}
+document.getElementById("pinInput").addEventListener("keydown", function(e) {
+if (e.key === "Enter") submitPin();
+});
+if (saved) { PIN = saved; startBoard(); }
+});
+
+function submitPin() {
+var val = document.getElementById("pinInput").value.trim();
+if (!val) return;
+PIN = val;
+// Validate by attempting one fetch.
+fetchOrders(function(ok, data) {
+if (ok) {
+try { localStorage.setItem("coffeeKdsPin", PIN); } catch (e) {}
+startBoard(data);
+} else {
+document.getElementById("gateErr").textContent = "Wrong PIN, try again.";
+PIN = "";
+}
+});
+}
+
+function startBoard(initialData) {
+document.getElementById("gate").style.display = "none";
+document.getElementById("app").style.display = "block";
+fetchStatus();
+if (initialData) { handleOrders(initialData); }
+else { poll(); }
+if (pollTimer) clearInterval(pollTimer);
+pollTimer = setInterval(poll, POLL_MS);
+if (tickTimer) clearInterval(tickTimer);
+tickTimer = setInterval(updateCountdowns, 1000);
+}
+
+/* ---------- JSONP helpers ---------- */
+function jsonp(url, cb) {
+var name = "cb_" + Math.random().toString(36).slice(2);
+var script = document.createElement("script");
+var done = false;
+var timer = setTimeout(function() {
+if (done) return;
+done = true;
+cleanup();
+cb(false, null);
+}, 10000);
+function cleanup() {
+clearTimeout(timer);
+try { delete window[name]; } catch (e) { window[name] = undefined; }
+if (script.parentNode) script.parentNode.removeChild(script);
+}
+window[name] = function(data) {
+if (done) return;
+done = true;
+cleanup();
+cb(true, data);
+};
+script.onerror = function() {
+if (done) return;
+done = true;
+cleanup();
+cb(false, null);
+};
+script.src = url + (url.indexOf("?") === -1 ? "?" : "&") + "callback=" + name;
+document.body.appendChild(script);
+}
+
+function fetchOrders(cb) {
+jsonp(APPS_SCRIPT_URL + "?action=orders&key=" + encodeURIComponent(PIN), function(ok, data) {
+if (ok && data && data.status === "success") cb(true, data);
+else cb(false, data);
+});
+}
+
+function fetchStatus() {
+jsonp(APPS_SCRIPT_URL + "?action=status", function(ok, data) {
+if (ok && data) {
+storeOpen = data.storeOpen !== false;
+storeMessage = data.storeMessage || "";
+renderStore();
+}
+});
+}
+
+/* ---------- Polling / rendering ---------- */
+function poll() {
+fetchOrders(function(ok, data) {
+var pill = document.getElementById("livePill");
+if (ok) {
+pill.textContent = "Live • updated " + new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+pill.className = "pill live";
+handleOrders(data);
+} else {
+pill.textContent = "Reconnecting…";
+pill.className = "pill";
+}
+});
+}
+
+function handleOrders(data) {
+orders = (data.orders || []).slice();
+// newest fresh detection
+var newFresh = false;
+orders.forEach(function(o) {
+if (firstLoadDone && !seenRows[o.row] && o.status !== "Done") { o._fresh = true; newFresh = true; }
+seenRows[o.row] = true;
+});
+render();
+if (newFresh) chime();
+firstLoadDone = true;
+}
+
+function esc(s) {
+return String(s == null ? "" : s).replace(/[&<>"']/g, function(c) {
+return { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c];
+});
+}
+
+function renderItems(itemsText) {
+var lines = String(itemsText || "").split("\n").filter(function(l) { return l.trim(); });
+return lines.map(function(line) {
+var idx = line.indexOf(" +");
+if (idx !== -1) {
+var main = line.slice(0, idx);
+var mods = line.slice(idx);
+return "<li>" + esc(main) + "<span class='mods'>" + esc(mods) + "</span></li>";
+}
+return "<li>" + esc(line) + "</li>";
+}).join("");
+}
+
+// Build the pickup time as a millisecond timestamp in the DEVICE's local
+// timezone (the staff tablet is in Melbourne), from the date + time strings.
+// Handles "YYYY-MM-DD" / "DD/MM/YYYY" dates and "8:00 AM" / "08:00" times.
+function pickupMsFromStrings(dateStr, timeStr, isoFallback) {
+dateStr = String(dateStr || "").trim();
+timeStr = String(timeStr || "").trim();
+var y, mo, da;
+var iso = dateStr.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+var dmy = dateStr.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+if (iso) { y = +iso[1]; mo = +iso[2]; da = +iso[3]; }
+else if (dmy) { y = +dmy[3]; mo = +dmy[2]; da = +dmy[1]; }
+else { return Date.parse(isoFallback) || NaN; }
+
+var h = 0, mi = 0;
+var ampm = timeStr.match(/^(\d{1,2}):(\d{2})\s*(AM|PM)$/i);
+var h24 = timeStr.match(/^(\d{1,2}):(\d{2})$/);
+if (ampm) {
+h = +ampm[1]; mi = +ampm[2];
+var p = ampm[3].toUpperCase();
+if (p === "PM" && h < 12) h += 12;
+if (p === "AM" && h === 12) h = 0;
+} else if (h24) {
+h = +h24[1]; mi = +h24[2];
+}
+return new Date(y, mo - 1, da, h, mi, 0).getTime();
+}
+
+function pickupMs(card) {
+return pickupMsFromStrings(card.dataset.date, card.dataset.time, card.dataset.iso);
+}
+
+function telHref(mobile) { return "tel:" + String(mobile).replace(/[^0-9+]/g, ""); }
+function smsHref(mobile) { return "sms:" + String(mobile).replace(/[^0-9+]/g, ""); }
+
+function orderCard(o, completed) {
+var div = document.createElement("div");
+div.className = "order" + (completed ? " completed" : "") + (o._fresh ? " fresh" : "");
+div.dataset.row = o.row;
+div.dataset.iso = o.pickupIso || "";
+div.dataset.date = o.date || "";
+div.dataset.time = o.time || "";
+
+var contact = "";
+if (o.mobile) {
+contact = "<div class='contact'>" +
+"<a class='call' href='" + telHref(o.mobile) + "'>📞 Call</a>" +
+"<a class='sms' href='" + smsHref(o.mobile) + "'>💬 Text</a>" +
+"</div>" +
+"<div class='meta'>" + esc(o.mobile) + "</div>";
+} else {
+contact = "<div class='meta'>No mobile provided</div>";
+}
+
+var instr = o.instructions ? "<div class='instructions'>📝 " + esc(o.instructions) + "</div>" : "";
+
+div.innerHTML =
+"<div class='order-head'>" +
+"<div class='cust'>" + esc(o.name || "Customer") + "</div>" +
+"<div class='pickup'>Pickup<br><strong>" + esc(o.time || "") + "</strong></div>" +
+"</div>" +
+(completed ? "" : "<div class='count' data-count>—</div>") +
+"<ul class='items'>" + renderItems(o.items) + "</ul>" +
+instr +
+"<div class='meta'>Total: $" + esc(o.total) + " · " + esc(o.date) + "</div>" +
+contact +
+(completed
+? "<button class='undo-btn' onclick='reopenOrder(" + o.row + ")'>↩ Reopen</button>"
+: "<button class='done-btn' onclick='completeOrder(" + o.row + ", this)'>✓ Mark Ready</button>");
+
+return div;
+}
+
+function render() {
+var board = document.getElementById("board");
+var completedBoard = document.getElementById("completedBoard");
+board.innerHTML = "";
+completedBoard.innerHTML = "";
+
+// Hide stale active orders from before today (old tests / no-shows).
+var startOfToday = new Date(); startOfToday.setHours(0, 0, 0, 0);
+var todayMs = startOfToday.getTime();
+
+var active = orders.filter(function(o) {
+if (o.status === "Done") return false;
+var t = pickupMsFromStrings(o.date, o.time, o.pickupIso);
+if (isNaN(t)) return true; // unknown pickup — show to be safe
+return t >= todayMs;
+});
+var done = orders.filter(function(o) { return o.status === "Done"; });
+
+// sort active by pickup time ascending
+active.sort(function(a, b) {
+var ta = pickupMsFromStrings(a.date, a.time, a.pickupIso); if (isNaN(ta)) ta = Infinity;
+var tb = pickupMsFromStrings(b.date, b.time, b.pickupIso); if (isNaN(tb)) tb = Infinity;
+return ta - tb;
+});
+done.reverse();
+
+document.getElementById("activeCount").textContent = active.length;
+document.getElementById("emptyActive").style.display = active.length ? "none" : "block";
+
+active.forEach(function(o) { board.appendChild(orderCard(o, false)); });
+done.forEach(function(o) { completedBoard.appendChild(orderCard(o, true)); });
+
+// clear fresh flags after first render pass
+orders.forEach(function(o) { o._fresh = false; });
+
+updateCountdowns();
+}
+
+function updateCountdowns() {
+var now = Date.now();
+document.querySelectorAll("#board .order").forEach(function(card) {
+var el = card.querySelector("[data-count]");
+if (!el) return;
+var t = pickupMs(card);
+if (isNaN(t)) { el.textContent = "—"; el.className = "count"; card.classList.remove("soon", "overdue"); return; }
+var diff = t - now;
+var overdue = diff < 0;
+var mins = Math.floor(Math.abs(diff) / 60000);
+var secs = Math.floor((Math.abs(diff) % 60000) / 1000);
+var mm = (mins < 10 ? "0" : "") + mins;
+var ss = (secs < 10 ? "0" : "") + secs;
+
+card.classList.remove("soon", "overdue");
+if (overdue) {
+el.textContent = "▲ " + mm + ":" + ss + " overdue";
+el.className = "count overdue";
+card.classList.add("overdue");
+} else if (mins < 15) {
+el.textContent = "in " + mm + ":" + ss;
+el.className = "count soon";
+card.classList.add("soon");
+} else {
+el.textContent = "in " + mm + ":" + ss;
+el.className = "count ok";
+}
+});
+}
+
+/* ---------- Actions (writes) ---------- */
+function postAction(payload, cb) {
+payload.key = PIN;
+fetch(APPS_SCRIPT_URL, { method: "POST", body: JSON.stringify(payload) })
+.then(function(r) { return r.json(); })
+.then(function(res) { cb(res && res.status === "success", res); })
+.catch(function() { cb(false, null); });
+}
+
+function completeOrder(row, btn) {
+if (btn) { btn.disabled = true; btn.textContent = "Saving…"; }
+postAction({ action: "complete", row: row }, function(ok) {
+if (ok) {
+var o = orders.find(function(x) { return x.row === row; });
+if (o) o.status = "Done";
+render();
+} else if (btn) {
+btn.disabled = false; btn.textContent = "✓ Mark Ready"; alert("Couldn't update. Try again.");
+}
+});
+}
+
+function reopenOrder(row) {
+postAction({ action: "reopen", row: row }, function(ok) {
+if (ok) {
+var o = orders.find(function(x) { return x.row === row; });
+if (o) o.status = "New";
+render();
+} else { alert("Couldn't reopen. Try again."); }
+});
+}
+
+function toggleStore() {
+var next = !storeOpen;
+var msg = document.getElementById("storeMsg").value;
+setStore(next, msg);
+}
+
+function saveStoreMessage() {
+setStore(storeOpen, document.getElementById("storeMsg").value);
+}
+
+function setStore(open, message) {
+postAction({ action: "setStatus", open: open, message: message }, function(ok, res) {
+if (ok) {
+storeOpen = !!res.storeOpen;
+storeMessage = res.storeMessage || "";
+renderStore();
+} else { alert("Couldn't change store status. Try again."); }
+});
+}
+
+function renderStore() {
+var state = document.getElementById("storeState");
+var sw = document.getElementById("storeSwitch");
+var msg = document.getElementById("storeMsg");
+if (document.activeElement !== msg) msg.value = storeMessage;
+if (storeOpen) {
+state.textContent = "OPEN";
+state.className = "store-state open";
+sw.textContent = "Close ordering";
+sw.className = "switch-btn to-close";
+} else {
+state.textContent = "CLOSED";
+state.className = "store-state closed";
+sw.textContent = "Reopen ordering";
+sw.className = "switch-btn to-open";
+}
+}
+
+function toggleCompleted() {
+showCompleted = !showCompleted;
+document.getElementById("completedWrap").style.display = showCompleted ? "block" : "none";
+document.getElementById("toggleCompleted").textContent =
+(showCompleted ? "Hide completed today ▴" : "Show completed today ▾");
+}
+
+/* ---------- New-order chime ---------- */
+function chime() {
+try {
+var ctx = new (window.AudioContext || window.webkitAudioContext)();
+var o = ctx.createOscillator();
+var g = ctx.createGain();
+o.connect(g); g.connect(ctx.destination);
+o.type = "sine"; o.frequency.value = 880;
+g.gain.setValueAtTime(0.0001, ctx.currentTime);
+g.gain.exponentialRampToValueAtTime(0.2, ctx.currentTime + 0.02);
+g.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.5);
+o.start(); o.stop(ctx.currentTime + 0.5);
+} catch (e) {}
+}
+</script>
+</body>
+</html>

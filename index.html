@@ -16,7 +16,8 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .card { background: #1e293b; padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-bottom: 20px; border: 1px solid #334155; }
 .form-group { margin-bottom: 15px; }
 label { display: block; font-weight: 600; margin-bottom: 6px; color: #cbd5e1; }
-select, input[type="date"], input[type="text"], input[type="number"], textarea, button { width: 100%; padding: 12px; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #f8fafc; font-size: 14px; box-sizing: border-box; }
+.hint { font-weight: normal; font-size: 12px; color: #94a3b8; margin-top: 4px; }
+select, input[type="date"], input[type="text"], input[type="tel"], input[type="number"], textarea, button { width: 100%; padding: 12px; border: 1px solid #475569; border-radius: 8px; background: #0f172a; color: #f8fafc; font-size: 14px; box-sizing: border-box; }
 textarea { resize: vertical; min-height: 70px; }
 button { background: #2563eb; color: #ffffff; font-weight: bold; border: none; cursor: pointer; margin-top: 10px; border-radius: 8px; }
 button:hover { background: #1d4ed8; }
@@ -32,6 +33,10 @@ button:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
 .status-msg { padding: 12px; border-radius: 8px; margin-top: 15px; display: none; }
 .status-msg.success { background: #064e3b; color: #6ee7b7; border: 1px solid #059669; display: block; }
 .status-msg.error { background: #7f1d1d; color: #fca5a5; border: 1px solid #dc2626; display: block; }
+
+.closed-banner { display: none; background: #7f1d1d; color: #fecaca; border: 1px solid #dc2626; border-radius: 12px; padding: 18px 20px; margin-bottom: 20px; }
+.closed-banner h3 { margin: 0 0 6px; color: #fca5a5; font-size: 18px; }
+.closed-banner p { margin: 0; font-size: 14px; color: #fee2e2; }
 
 .calendar-actions { display: flex; flex-direction: column; gap: 10px; margin-top: 15px; }
 .calendar-btn { background: #059669; font-size: 14px; padding: 12px; }
@@ -65,6 +70,11 @@ button:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
 </head>
 <body>
 
+<div id="closedBanner" class="closed-banner">
+<h3>&#128564; Online ordering is closed</h3>
+<p id="closedBannerMsg">Carriage Coffee Express isn't taking online orders right now. Please check back on our next open day.</p>
+</div>
+
 <div class="card">
 <div class="app-header">
 <img src="GEM_placeHolder_logo_V22.png" alt="Gemco" class="brand-logo">
@@ -90,6 +100,12 @@ button:disabled { background: #475569; cursor: not-allowed; opacity: 0.6; }
 <div class="form-group">
 <label for="customerName">Your Name</label>
 <input type="text" id="customerName" name="customerName" placeholder="Enter your name" required>
+</div>
+
+<div class="form-group">
+<label for="customerMobile">Mobile Number</label>
+<input type="tel" id="customerMobile" name="customerMobile" placeholder="e.g. 0412 345 678" inputmode="tel" autocomplete="tel" required>
+<div class="hint">So we can text you if there's a problem with your order or a pickup change.</div>
 </div>
 
 <div class="form-group">
@@ -180,789 +196,839 @@ var menuData = { categories: [], items: [], modifiers: [] };
 var cart = [];
 var lastOrderDetails = null;
 var deferredInstallPrompt = null;
+var storeOpen = true;
 var LOCAL_MENU = buildLocalMenu();
 var EXCLUDE_KEYWORDS = ["muffin", "slice", "cookie", "cake", "sandwich", "panini", "toastie", "wrap", "alternative milk", "syrup"];
 
 function buildLocalMenu() {
-  function mkItem(id, categoryId, name) {
-    return {
-      id: id,
-      category_id: categoryId,
-      name: name,
-      modifier_ids: ["mod-milk"],
-      variants: [
-        { variant_id: id + "-s", option1_value: "Small (8oz)", default_price: 5 },
-        { variant_id: id + "-l", option1_value: "Large (12oz)", default_price: 6 }
-      ]
-    };
-  }
-  return {
-    items: [
-      mkItem("hot-flatwhite", "hot", "Flat White"),
-      mkItem("hot-cappuccino", "hot", "Cappuccino"),
-      mkItem("hot-latte", "hot", "Caffe Latte"),
-      mkItem("hot-longblack", "hot", "Long Black"),
-      mkItem("hot-mocha", "hot", "Mocha"),
-      mkItem("hot-hotchoc", "hot", "Hot Chocolate"),
-      mkItem("cold-icedlatte", "cold", "Iced Latte"),
-      mkItem("cold-icedlongblack", "cold", "Iced Long Black"),
-      mkItem("cold-coldbrew", "cold", "Cold Brew"),
-      mkItem("cold-icedmocha", "cold", "Iced Mocha"),
-      mkItem("cold-icedchoc", "cold", "Iced Chocolate"),
-      mkItem("cold-lemonade", "cold", "Sparkling Lemonade"),
-      mkItem("tea-english", "tea", "English Breakfast Tea"),
-      mkItem("tea-green", "tea", "Green Tea"),
-      mkItem("tea-chai", "tea", "Chai Latte"),
-      mkItem("tea-peppermint", "tea", "Peppermint Tea"),
-      mkItem("tea-earlgrey", "tea", "Earl Grey"),
-      mkItem("tea-herbal", "tea", "Herbal Tea")
-    ],
-    modifiers: [
-      {
-        id: "mod-milk",
-        name: "Milk & Syrup",
-        modifier_options: [
-          { name: "Alternative Milk", price: 0.70 },
-          { name: "Add Syrup", price: 0.70 },
-          { name: "Extra Shot", price: 0.70 },
-          { name: "Extra Hot", price: 0 }
-        ]
-      }
-    ]
-  };
+function mkItem(id, categoryId, name) {
+return {
+id: id,
+category_id: categoryId,
+name: name,
+modifier_ids: ["mod-milk"],
+variants: [
+{ variant_id: id + "-s", option1_value: "Small (8oz)", default_price: 5 },
+{ variant_id: id + "-l", option1_value: "Large (12oz)", default_price: 6 }
+]
+};
+}
+return {
+items: [
+mkItem("hot-flatwhite", "hot", "Flat White"),
+mkItem("hot-cappuccino", "hot", "Cappuccino"),
+mkItem("hot-latte", "hot", "Caffe Latte"),
+mkItem("hot-longblack", "hot", "Long Black"),
+mkItem("hot-mocha", "hot", "Mocha"),
+mkItem("hot-hotchoc", "hot", "Hot Chocolate"),
+mkItem("cold-icedlatte", "cold", "Iced Latte"),
+mkItem("cold-icedlongblack", "cold", "Iced Long Black"),
+mkItem("cold-coldbrew", "cold", "Cold Brew"),
+mkItem("cold-icedmocha", "cold", "Iced Mocha"),
+mkItem("cold-icedchoc", "cold", "Iced Chocolate"),
+mkItem("cold-lemonade", "cold", "Sparkling Lemonade"),
+mkItem("tea-english", "tea", "English Breakfast Tea"),
+mkItem("tea-green", "tea", "Green Tea"),
+mkItem("tea-chai", "tea", "Chai Latte"),
+mkItem("tea-peppermint", "tea", "Peppermint Tea"),
+mkItem("tea-earlgrey", "tea", "Earl Grey"),
+mkItem("tea-herbal", "tea", "Herbal Tea")
+],
+modifiers: [
+{
+id: "mod-milk",
+name: "Milk & Syrup",
+modifier_options: [
+{ name: "Alternative Milk", price: 0.70 },
+{ name: "Add Syrup", price: 0.70 },
+{ name: "Extra Shot", price: 0.70 },
+{ name: "Extra Hot", price: 0 }
+]
+}
+]
+};
 }
 
 function isExcludedItem(name) {
-  var n = (name || "").toLowerCase();
-  for (var i = 0; i < EXCLUDE_KEYWORDS.length; i++) {
-    if (n.indexOf(EXCLUDE_KEYWORDS[i]) !== -1) return true;
-  }
-  return false;
+var n = (name || "").toLowerCase();
+for (var i = 0; i < EXCLUDE_KEYWORDS.length; i++) {
+if (n.indexOf(EXCLUDE_KEYWORDS[i]) !== -1) return true;
+}
+return false;
 }
 
 function classifyBucket(text) {
-  var t = (text || "").toLowerCase();
-  if (t.indexOf("tea") !== -1 || t.indexOf("chai") !== -1) return "tea";
-  if (t.indexOf("iced") !== -1 || t.indexOf("cold") !== -1 || t.indexOf("frapp") !== -1 || t.indexOf("lemonade") !== -1 || t.indexOf("soda") !== -1 || t.indexOf("juice") !== -1) return "cold";
-  if (/\bhot\b/.test(t) || t.indexOf("coffee") !== -1 || t.indexOf("latte") !== -1 || t.indexOf("cappuccino") !== -1 || t.indexOf("espresso") !== -1 || t.indexOf("mocha") !== -1 || t.indexOf("black") !== -1 || t.indexOf("flat white") !== -1 || t.indexOf("macchiato") !== -1 || t.indexOf(" mac") !== -1 || t.indexOf("chocolate") !== -1 || t.indexOf("babyccino") !== -1) return "hot";
-  return null;
+var t = (text || "").toLowerCase();
+if (t.indexOf("tea") !== -1 || t.indexOf("chai") !== -1) return "tea";
+if (t.indexOf("iced") !== -1 || t.indexOf("cold") !== -1 || t.indexOf("frapp") !== -1 || t.indexOf("lemonade") !== -1 || t.indexOf("soda") !== -1 || t.indexOf("juice") !== -1) return "cold";
+if (/\bhot\b/.test(t) || t.indexOf("coffee") !== -1 || t.indexOf("latte") !== -1 || t.indexOf("cappuccino") !== -1 || t.indexOf("espresso") !== -1 || t.indexOf("mocha") !== -1 || t.indexOf("black") !== -1 || t.indexOf("flat white") !== -1 || t.indexOf("macchiato") !== -1 || t.indexOf(" mac") !== -1 || t.indexOf("chocolate") !== -1 || t.indexOf("babyccino") !== -1) return "hot";
+return null;
 }
 
 function buildFinalMenu(apiData) {
-  var buckets = { hot: [], cold: [], tea: [] };
+var buckets = { hot: [], cold: [], tea: [] };
 
-  if (apiData && Array.isArray(apiData.items) && apiData.items.length) {
-    var catNameById = {};
-    (apiData.categories || []).forEach(function(c) { catNameById[c.id] = c.name; });
-    apiData.items.forEach(function(item) {
-      if (isExcludedItem(item.name)) return;
-      var catName = catNameById[item.category_id] || "";
-      var bucket = classifyBucket(item.name) || classifyBucket(catName);
-      if (bucket) buckets[bucket].push(item);
-    });
-  }
+if (apiData && Array.isArray(apiData.items) && apiData.items.length) {
+var catNameById = {};
+(apiData.categories || []).forEach(function(c) { catNameById[c.id] = c.name; });
+apiData.items.forEach(function(item) {
+if (isExcludedItem(item.name)) return;
+var catName = catNameById[item.category_id] || "";
+var bucket = classifyBucket(item.name) || classifyBucket(catName);
+if (bucket) buckets[bucket].push(item);
+});
+}
 
-  ["hot", "cold", "tea"].forEach(function(b) {
-    var localItems = LOCAL_MENU.items.filter(function(i) { return i.category_id === b; });
-    var existingNames = {};
-    buckets[b].forEach(function(i) { existingNames[(i.name || "").toLowerCase()] = true; });
-    localItems.forEach(function(li) {
-      if (!existingNames[li.name.toLowerCase()]) buckets[b].push(li);
-    });
-  });
+["hot", "cold", "tea"].forEach(function(b) {
+var localItems = LOCAL_MENU.items.filter(function(i) { return i.category_id === b; });
+var existingNames = {};
+buckets[b].forEach(function(i) { existingNames[(i.name || "").toLowerCase()] = true; });
+localItems.forEach(function(li) {
+if (!existingNames[li.name.toLowerCase()]) buckets[b].push(li);
+});
+});
 
-  var finalItems = [];
-  ["hot", "cold", "tea"].forEach(function(b) {
-    buckets[b].forEach(function(i) {
-      i.category_id = b;
-      finalItems.push(i);
-    });
-  });
+var finalItems = [];
+["hot", "cold", "tea"].forEach(function(b) {
+buckets[b].forEach(function(i) {
+i.category_id = b;
+finalItems.push(i);
+});
+});
 
-  var finalCategories = [
-    { id: "hot", name: "☕ Hot Drinks" },
-    { id: "cold", name: "🧊 Cold Drinks" },
-    { id: "tea", name: "🍵 Tea" }
-  ];
+var finalCategories = [
+{ id: "hot", name: "☕ Hot Drinks" },
+{ id: "cold", name: "🧊 Cold Drinks" },
+{ id: "tea", name: "🍵 Tea" }
+];
 
-  var finalModifiers = LOCAL_MENU.modifiers;
-  if (apiData && apiData.modifiers && apiData.modifiers.length) {
-    finalModifiers = apiData.modifiers.concat(LOCAL_MENU.modifiers);
-  }
+var finalModifiers = LOCAL_MENU.modifiers;
+if (apiData && apiData.modifiers && apiData.modifiers.length) {
+finalModifiers = apiData.modifiers.concat(LOCAL_MENU.modifiers);
+}
 
-  return { categories: finalCategories, items: finalItems, modifiers: finalModifiers };
+return { categories: finalCategories, items: finalItems, modifiers: finalModifiers };
 }
 
 document.addEventListener("DOMContentLoaded", function() {
-  initializeDatePicker();
-  populatePickupTimes();
-  fetchMenuData();
-  prefillCustomerName();
-  loadLastOrderUI();
-  setupInstallPrompt();
-  setupQrCode();
-  registerServiceWorker();
+initializeDatePicker();
+populatePickupTimes();
+fetchMenuData();
+prefillCustomerDetails();
+loadLastOrderUI();
+setupInstallPrompt();
+setupQrCode();
+registerServiceWorker();
 });
 
 function formatDateStr(d) {
-  var yyyy = d.getFullYear();
-  var mm = String(d.getMonth() + 1).padStart(2, "0");
-  var dd = String(d.getDate()).padStart(2, "0");
-  return yyyy + "-" + mm + "-" + dd;
+var yyyy = d.getFullYear();
+var mm = String(d.getMonth() + 1).padStart(2, "0");
+var dd = String(d.getDate()).padStart(2, "0");
+return yyyy + "-" + mm + "-" + dd;
 }
 
 function formatDateWithOrdinal(dateStr) {
-  if (!dateStr) return '';
-  var parts = dateStr.split('-');
-  var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
-  
-  var dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
-  var monthName = dateObj.toLocaleDateString('en-US', { month: 'long' });
-  var dayNum = dateObj.getDate();
+if (!dateStr) return '';
+var parts = dateStr.split('-');
+var dateObj = new Date(parts[0], parts[1] - 1, parts[2]);
 
-  var nth = function(d) {
-    if (d > 3 && d < 21) return 'th';
-    switch (d % 10) {
-      case 1: return "st";
-      case 2: return "nd";
-      case 3: return "rd";
-      default: return "th";
-    }
-  };
+var dayName = dateObj.toLocaleDateString('en-US', { weekday: 'long' });
+var monthName = dateObj.toLocaleDateString('en-US', { month: 'long' });
+var dayNum = dateObj.getDate();
 
-  return dayName + " " + monthName + " " + dayNum + nth(dayNum);
+var nth = function(d) {
+if (d > 3 && d < 21) return 'th';
+switch (d % 10) {
+case 1: return "st";
+case 2: return "nd";
+case 3: return "rd";
+default: return "th";
+}
+};
+
+return dayName + " " + monthName + " " + dayNum + nth(dayNum);
 }
 
 function initializeDatePicker() {
-  var dateInput = document.getElementById("pickupDate");
-  var target = new Date();
+var dateInput = document.getElementById("pickupDate");
+var target = new Date();
 
-  if ((target.getDay() === 2 || target.getDay() === 4) && target.getHours() >= 11) {
-    target.setDate(target.getDate() + 1);
-  }
+if ((target.getDay() === 2 || target.getDay() === 4) && target.getHours() >= 11) {
+target.setDate(target.getDate() + 1);
+}
 
-  while (target.getDay() !== 2 && target.getDay() !== 4) {
-    target.setDate(target.getDate() + 1);
-  }
+while (target.getDay() !== 2 && target.getDay() !== 4) {
+target.setDate(target.getDate() + 1);
+}
 
-  dateInput.min = formatDateStr(new Date());
-  dateInput.value = formatDateStr(target);
-  dateInput.onchange = validatePickupDate;
+dateInput.min = formatDateStr(new Date());
+dateInput.value = formatDateStr(target);
+dateInput.onchange = validatePickupDate;
 }
 
 function validatePickupDate() {
-  var dateInput = document.getElementById("pickupDate");
-  if (!dateInput.value) return;
+var dateInput = document.getElementById("pickupDate");
+if (!dateInput.value) return;
 
-  var parts = dateInput.value.split("-");
-  var chosen = new Date(parts[0], parts[1] - 1, parts[2]);
-  var day = chosen.getDay();
+var parts = dateInput.value.split("-");
+var chosen = new Date(parts[0], parts[1] - 1, parts[2]);
+var day = chosen.getDay();
 
-  if (day !== 2 && day !== 4) {
-    alert("Pickup is available on Tuesdays and Thursdays only.");
-    initializeDatePicker();
-  }
+if (day !== 2 && day !== 4) {
+alert("Pickup is available on Tuesdays and Thursdays only.");
+initializeDatePicker();
+}
 }
 
 function populatePickupTimes() {
-  var timeSelect = document.getElementById("pickupTime");
-  timeSelect.innerHTML = "";
-  var defaultOpt = document.createElement("option");
-  defaultOpt.value = "";
-  defaultOpt.textContent = "-- Select Pickup Time --";
-  timeSelect.appendChild(defaultOpt);
+var timeSelect = document.getElementById("pickupTime");
+timeSelect.innerHTML = "";
+var defaultOpt = document.createElement("option");
+defaultOpt.value = "";
+defaultOpt.textContent = "-- Select Pickup Time --";
+timeSelect.appendChild(defaultOpt);
 
-  for (var hour = 8; hour <= 11; hour++) {
-    var maxMin = (hour === 11) ? 0 : 55;
-    for (var min = 0; min <= maxMin; min += 5) {
-      var period = hour >= 12 ? "PM" : "AM";
-      var displayHour = hour > 12 ? hour - 12 : hour;
-      var displayMin = min < 10 ? "0" + min : String(min);
-      var timeVal = displayHour + ":" + displayMin + " " + period;
+for (var hour = 8; hour <= 11; hour++) {
+var maxMin = (hour === 11) ? 0 : 55;
+for (var min = 0; min <= maxMin; min += 5) {
+var period = hour >= 12 ? "PM" : "AM";
+var displayHour = hour > 12 ? hour - 12 : hour;
+var displayMin = min < 10 ? "0" + min : String(min);
+var timeVal = displayHour + ":" + displayMin + " " + period;
 
-      var opt = document.createElement("option");
-      opt.value = timeVal;
-      opt.textContent = timeVal;
-      timeSelect.appendChild(opt);
-    }
-  }
+var opt = document.createElement("option");
+opt.value = timeVal;
+opt.textContent = timeVal;
+timeSelect.appendChild(opt);
+}
+}
 }
 
 function fetchMenuData() {
-  var script = document.createElement("script");
-  script.id = "jsonp-menu-script";
-  script.src = APPS_SCRIPT_URL + "?callback=handleMenuResponse";
+var script = document.createElement("script");
+script.id = "jsonp-menu-script";
+script.src = APPS_SCRIPT_URL + "?callback=handleMenuResponse";
 
-  var timeoutHandle = setTimeout(function() {
-    if (!menuData.categories || menuData.categories.length === 0) {
-      menuData = buildFinalMenu(null);
-      populateCategories();
-    }
-  }, 8000);
+var timeoutHandle = setTimeout(function() {
+if (!menuData.categories || menuData.categories.length === 0) {
+menuData = buildFinalMenu(null);
+populateCategories();
+}
+}, 8000);
 
-  window.handleMenuResponse = function(data) {
-    clearTimeout(timeoutHandle);
-    if (data && data.status === "error") {
-      menuData = buildFinalMenu(null);
-      populateCategories();
-      return;
-    }
-    menuData = buildFinalMenu(data);
-    populateCategories();
-  };
+window.handleMenuResponse = function(data) {
+clearTimeout(timeoutHandle);
+if (data && typeof data.storeOpen !== "undefined") {
+applyStoreStatus(data.storeOpen !== false, data.storeMessage || "");
+}
+if (data && data.status === "error") {
+menuData = buildFinalMenu(null);
+populateCategories();
+return;
+}
+menuData = buildFinalMenu(data);
+populateCategories();
+};
 
-  document.body.appendChild(script);
+document.body.appendChild(script);
+}
+
+function applyStoreStatus(isOpen, message) {
+storeOpen = isOpen;
+var banner = document.getElementById("closedBanner");
+var bannerMsg = document.getElementById("closedBannerMsg");
+var submitBtn = document.getElementById("submit-btn");
+var addBtn = document.getElementById("add-to-cart-btn");
+
+if (isOpen) {
+banner.style.display = "none";
+if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = "Place Order"; }
+} else {
+if (message) bannerMsg.textContent = message;
+banner.style.display = "block";
+if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = "Ordering Closed"; }
+if (addBtn) addBtn.disabled = true;
+window.scrollTo({ top: 0, behavior: "smooth" });
+}
 }
 
 function populateCategories() {
-  var catSelect = document.getElementById("categorySelect");
-  catSelect.innerHTML = "";
-  var defaultOpt = document.createElement("option");
-  defaultOpt.value = "";
-  defaultOpt.textContent = "Select a Category...";
-  catSelect.appendChild(defaultOpt);
+var catSelect = document.getElementById("categorySelect");
+catSelect.innerHTML = "";
+var defaultOpt = document.createElement("option");
+defaultOpt.value = "";
+defaultOpt.textContent = "Select a Category...";
+catSelect.appendChild(defaultOpt);
 
-  menuData.categories.forEach(function(cat) {
-    var opt = document.createElement("option");
-    opt.value = cat.id;
-    opt.textContent = cat.name;
-    catSelect.appendChild(opt);
-  });
+menuData.categories.forEach(function(cat) {
+var opt = document.createElement("option");
+opt.value = cat.id;
+opt.textContent = cat.name;
+catSelect.appendChild(opt);
+});
 }
 
 function onCategoryChange() {
-  var catId = document.getElementById("categorySelect").value;
-  var itemSelect = document.getElementById("itemSelect");
+var catId = document.getElementById("categorySelect").value;
+var itemSelect = document.getElementById("itemSelect");
 
-  itemSelect.innerHTML = "";
-  var defOpt = document.createElement("option");
-  defOpt.value = "";
-  defOpt.textContent = "-- Select Drink --";
-  itemSelect.appendChild(defOpt);
-  resetVariantAndModifiers();
+itemSelect.innerHTML = "";
+var defOpt = document.createElement("option");
+defOpt.value = "";
+defOpt.textContent = "-- Select Drink --";
+itemSelect.appendChild(defOpt);
+resetVariantAndModifiers();
 
-  if (!catId) {
-    itemSelect.disabled = true;
-    return;
-  }
+if (!catId) {
+itemSelect.disabled = true;
+return;
+}
 
-  var filteredItems = menuData.items.filter(function(item) {
-    return String(item.category_id || "").trim() === String(catId).trim();
-  });
+var filteredItems = menuData.items.filter(function(item) {
+return String(item.category_id || "").trim() === String(catId).trim();
+});
 
-  if (filteredItems.length === 0) {
-    itemSelect.innerHTML = "<option value=\"\">No drinks available</option>";
-    itemSelect.disabled = true;
-    return;
-  }
+if (filteredItems.length === 0) {
+itemSelect.innerHTML = "<option value=\"\">No drinks available</option>";
+itemSelect.disabled = true;
+return;
+}
 
-  filteredItems.forEach(function(item) {
-    var opt = document.createElement("option");
-    opt.value = item.id;
-    opt.textContent = item.name;
-    itemSelect.appendChild(opt);
-  });
+filteredItems.forEach(function(item) {
+var opt = document.createElement("option");
+opt.value = item.id;
+opt.textContent = item.name;
+itemSelect.appendChild(opt);
+});
 
-  itemSelect.disabled = false;
+itemSelect.disabled = false;
 }
 
 function onItemChange() {
-  var itemId = document.getElementById("itemSelect").value;
-  var variantSelect = document.getElementById("variantSelect");
-  var addToCartBtn = document.getElementById("add-to-cart-btn");
+var itemId = document.getElementById("itemSelect").value;
+var variantSelect = document.getElementById("variantSelect");
+var addToCartBtn = document.getElementById("add-to-cart-btn");
 
-  if (!itemId) {
-    resetVariantAndModifiers();
-    return;
-  }
+if (!itemId) {
+resetVariantAndModifiers();
+return;
+}
 
-  var selectedItem = menuData.items.find(function(i) { return i.id === itemId; });
-  if (!selectedItem) return;
+var selectedItem = menuData.items.find(function(i) { return i.id === itemId; });
+if (!selectedItem) return;
 
-  variantSelect.innerHTML = "";
-  var variants = selectedItem.variants || [];
-  var largeIndex = -1;
+variantSelect.innerHTML = "";
+var variants = selectedItem.variants || [];
+var largeIndex = -1;
 
-  variants.forEach(function(v, idx) {
-    var opt = document.createElement("option");
-    opt.value = v.variant_id || v.id;
+variants.forEach(function(v, idx) {
+var opt = document.createElement("option");
+opt.value = v.variant_id || v.id;
 
-    var price = (v.default_price !== undefined && v.default_price !== null)
-      ? parseFloat(v.default_price)
-      : (v.stores && v.stores[0] ? parseFloat(v.stores[0].price) : 0);
+var price = (v.default_price !== undefined && v.default_price !== null)
+? parseFloat(v.default_price)
+: (v.stores && v.stores[0] ? parseFloat(v.stores[0].price) : 0);
 
-    opt.dataset.price = price;
+opt.dataset.price = price;
 
-    var labelName = v.option1_value;
-    if (!labelName) {
-      if (price === 5 || (v.sku && v.sku.toLowerCase().indexOf("small") !== -1)) {
-        labelName = "Small (8oz)";
-      } else if (price === 6 || (v.sku && v.sku.toLowerCase().indexOf("large") !== -1)) {
-        labelName = "Large (12oz)";
-      } else {
-        labelName = variants.length === 1 ? "Standard" : "Regular";
-      }
-    }
+var labelName = v.option1_value;
+if (!labelName) {
+if (price === 5 || (v.sku && v.sku.toLowerCase().indexOf("small") !== -1)) {
+labelName = "Small (8oz)";
+} else if (price === 6 || (v.sku && v.sku.toLowerCase().indexOf("large") !== -1)) {
+labelName = "Large (12oz)";
+} else {
+labelName = variants.length === 1 ? "Standard" : "Regular";
+}
+}
 
-    opt.dataset.label = labelName;
-    opt.textContent = labelName + " ($" + price.toFixed(2) + ")";
+opt.dataset.label = labelName;
+opt.textContent = labelName + " ($" + price.toFixed(2) + ")";
 
-    if (/large/i.test(labelName)) largeIndex = idx;
+if (/large/i.test(labelName)) largeIndex = idx;
 
-    variantSelect.appendChild(opt);
-  });
+variantSelect.appendChild(opt);
+});
 
-  variantSelect.disabled = variants.length === 0;
+variantSelect.disabled = variants.length === 0;
 
-  if (largeIndex !== -1) {
-    variantSelect.selectedIndex = largeIndex;
-  } else if (variantSelect.options.length > 0) {
-    variantSelect.selectedIndex = variantSelect.options.length - 1;
-  }
+if (largeIndex !== -1) {
+variantSelect.selectedIndex = largeIndex;
+} else if (variantSelect.options.length > 0) {
+variantSelect.selectedIndex = variantSelect.options.length - 1;
+}
 
-  populateModifiers(selectedItem);
-  addToCartBtn.disabled = false;
+populateModifiers(selectedItem);
+addToCartBtn.disabled = !storeOpen;
 }
 
 function populateModifiers(item) {
-  var container = document.getElementById("modifiersContainer");
-  container.innerHTML = "";
+var container = document.getElementById("modifiersContainer");
+container.innerHTML = "";
 
-  var itemModIds = item.modifier_ids || [];
-  if (itemModIds.length === 0 || !menuData.modifiers) {
-    container.innerHTML = "<i>No add-ons available for this drink.</i>";
-    return;
-  }
+var itemModIds = item.modifier_ids || [];
+if (itemModIds.length === 0 || !menuData.modifiers) {
+container.innerHTML = "<i>No add-ons available for this drink.</i>";
+return;
+}
 
-  var availableModifiers = menuData.modifiers.filter(function(m) { return itemModIds.indexOf(m.id) !== -1; });
+var availableModifiers = menuData.modifiers.filter(function(m) { return itemModIds.indexOf(m.id) !== -1; });
 
-  if (availableModifiers.length === 0) {
-    container.innerHTML = "<i>No add-ons available.</i>";
-    return;
-  }
+if (availableModifiers.length === 0) {
+container.innerHTML = "<i>No add-ons available.</i>";
+return;
+}
 
-  availableModifiers.forEach(function(mod) {
-    var groupDiv = document.createElement("div");
-    groupDiv.className = "modifier-group";
+availableModifiers.forEach(function(mod) {
+var groupDiv = document.createElement("div");
+groupDiv.className = "modifier-group";
 
-    var title = document.createElement("strong");
-    title.textContent = mod.name;
-    groupDiv.appendChild(title);
+var title = document.createElement("strong");
+title.textContent = mod.name;
+groupDiv.appendChild(title);
 
-    var optionsList = document.createElement("div");
-    optionsList.className = "modifier-options-list";
+var optionsList = document.createElement("div");
+optionsList.className = "modifier-options-list";
 
-    var options = mod.modifier_options || mod.options || [];
-    options.forEach(function(opt) {
-      var label = document.createElement("label");
-      var checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.className = "modifier-checkbox";
-      checkbox.value = opt.name || opt.option_name;
+var options = mod.modifier_options || mod.options || [];
+options.forEach(function(opt) {
+var label = document.createElement("label");
+var checkbox = document.createElement("input");
+checkbox.type = "checkbox";
+checkbox.className = "modifier-checkbox";
+checkbox.value = opt.name || opt.option_name;
 
-      var optPrice = parseFloat(opt.price !== undefined ? opt.price : (opt.default_price || 0));
-      checkbox.dataset.price = optPrice;
+var optPrice = parseFloat(opt.price !== undefined ? opt.price : (opt.default_price || 0));
+checkbox.dataset.price = optPrice;
 
-      var priceText = optPrice > 0 ? " (+$" + optPrice.toFixed(2) + ")" : "";
-      label.appendChild(checkbox);
-      label.appendChild(document.createTextNode(" " + (opt.name || opt.option_name) + priceText));
+var priceText = optPrice > 0 ? " (+$" + optPrice.toFixed(2) + ")" : "";
+label.appendChild(checkbox);
+label.appendChild(document.createTextNode(" " + (opt.name || opt.option_name) + priceText));
 
-      optionsList.appendChild(label);
-    });
+optionsList.appendChild(label);
+});
 
-    groupDiv.appendChild(optionsList);
-    container.appendChild(groupDiv);
-  });
+groupDiv.appendChild(optionsList);
+container.appendChild(groupDiv);
+});
 }
 
 function resetVariantAndModifiers() {
-  var variantSelect = document.getElementById("variantSelect");
-  var container = document.getElementById("modifiersContainer");
-  var addToCartBtn = document.getElementById("add-to-cart-btn");
+var variantSelect = document.getElementById("variantSelect");
+var container = document.getElementById("modifiersContainer");
+var addToCartBtn = document.getElementById("add-to-cart-btn");
 
-  variantSelect.innerHTML = "<option value=\"\">Select an Item First...</option>";
-  variantSelect.disabled = true;
-  container.innerHTML = "<i>Select an item to view add-ons</i>";
-  addToCartBtn.disabled = true;
+variantSelect.innerHTML = "<option value=\"\">Select an Item First...</option>";
+variantSelect.disabled = true;
+container.innerHTML = "<i>Select an item to view add-ons</i>";
+addToCartBtn.disabled = true;
 }
 
 function addToCart() {
-  var itemSelect = document.getElementById("itemSelect");
-  var variantSelect = document.getElementById("variantSelect");
-  var qtyInput = document.getElementById("itemQuantity");
+if (!storeOpen) return;
+var itemSelect = document.getElementById("itemSelect");
+var variantSelect = document.getElementById("variantSelect");
+var qtyInput = document.getElementById("itemQuantity");
 
-  if (!itemSelect.value) return;
+if (!itemSelect.value) return;
 
-  var itemId = itemSelect.value;
-  var itemObj = menuData.items.find(function(i) { return i.id === itemId; });
-  var selectedVariantOpt = variantSelect.options[variantSelect.selectedIndex];
+var itemId = itemSelect.value;
+var itemObj = menuData.items.find(function(i) { return i.id === itemId; });
+var selectedVariantOpt = variantSelect.options[variantSelect.selectedIndex];
 
-  var variantName = selectedVariantOpt ? selectedVariantOpt.dataset.label : "Standard";
-  var variantPrice = selectedVariantOpt ? parseFloat(selectedVariantOpt.dataset.price || 0) : 0;
-  var qty = parseInt(qtyInput.value, 10) || 1;
+var variantName = selectedVariantOpt ? selectedVariantOpt.dataset.label : "Standard";
+var variantPrice = selectedVariantOpt ? parseFloat(selectedVariantOpt.dataset.price || 0) : 0;
+var qty = parseInt(qtyInput.value, 10) || 1;
 
-  var selectedMods = [];
-  var modPriceTotal = 0;
+var selectedMods = [];
+var modPriceTotal = 0;
 
-  document.querySelectorAll(".modifier-checkbox:checked").forEach(function(cb) {
-    var modPrice = parseFloat(cb.dataset.price || 0);
-    selectedMods.push(cb.value);
-    modPriceTotal += modPrice;
-  });
+document.querySelectorAll(".modifier-checkbox:checked").forEach(function(cb) {
+var modPrice = parseFloat(cb.dataset.price || 0);
+selectedMods.push(cb.value);
+modPriceTotal += modPrice;
+});
 
-  var itemUnitPrice = variantPrice + modPriceTotal;
+var itemUnitPrice = variantPrice + modPriceTotal;
 
-  var cartItem = {
-    name: itemObj.name,
-    variant: variantName,
-    quantity: qty,
-    unitPrice: itemUnitPrice,
-    price: itemUnitPrice * qty,
-    modifiers: selectedMods
-  };
+var cartItem = {
+name: itemObj.name,
+variant: variantName,
+quantity: qty,
+unitPrice: itemUnitPrice,
+price: itemUnitPrice * qty,
+modifiers: selectedMods
+};
 
-  cart.push(cartItem);
-  renderCart();
+cart.push(cartItem);
+renderCart();
 
-  document.querySelectorAll(".modifier-checkbox").forEach(function(cb) { cb.checked = false; });
-  qtyInput.value = 1;
+document.querySelectorAll(".modifier-checkbox").forEach(function(cb) { cb.checked = false; });
+qtyInput.value = 1;
 }
 
 function renderCart() {
-  var cartList = document.getElementById("cartList");
-  var cartTotal = document.getElementById("cartTotal");
+var cartList = document.getElementById("cartList");
+var cartTotal = document.getElementById("cartTotal");
 
-  if (cart.length === 0) {
-    cartList.innerHTML = "<i>No items added yet.</i>";
-    cartTotal.textContent = "0.00";
-    return;
-  }
+if (cart.length === 0) {
+cartList.innerHTML = "<i>No items added yet.</i>";
+cartTotal.textContent = "0.00";
+return;
+}
 
-  cartList.innerHTML = "";
-  var total = 0;
+cartList.innerHTML = "";
+var total = 0;
 
-  cart.forEach(function(item, idx) {
-    total += item.price;
-    var div = document.createElement("div");
-    div.className = "cart-item";
+cart.forEach(function(item, idx) {
+total += item.price;
+var div = document.createElement("div");
+div.className = "cart-item";
 
-    var modText = item.modifiers.length > 0
-      ? "<br><small style=\"color:#94a3b8;\">+ " + item.modifiers.join(", ") + "</small>"
-      : "";
+var modText = item.modifiers.length > 0
+? "<br><small style=\"color:#94a3b8;\">+ " + item.modifiers.join(", ") + "</small>"
+: "";
 
-    div.innerHTML =
-      "<div><strong>" + item.quantity + "x " + item.name + "</strong> (" + item.variant + ")" + modText + "</div>" +
-      "<div>$" + item.price.toFixed(2) +
-      "<button type=\"button\" onclick=\"removeFromCart(" + idx + ")\" style=\"width:auto; padding: 4px 8px; margin-left: 8px; background: #ef4444;\">✕</button></div>";
+div.innerHTML =
+"<div><strong>" + item.quantity + "x " + item.name + "</strong> (" + item.variant + ")" + modText + "</div>" +
+"<div>$" + item.price.toFixed(2) +
+"<button type=\"button\" onclick=\"removeFromCart(" + idx + ")\" style=\"width:auto; padding: 4px 8px; margin-left: 8px; background: #ef4444;\">✕</button></div>";
 
-    cartList.appendChild(div);
-  });
+cartList.appendChild(div);
+});
 
-  cartTotal.textContent = total.toFixed(2);
+cartTotal.textContent = total.toFixed(2);
 }
 
 function removeFromCart(index) {
-  cart.splice(index, 1);
-  renderCart();
+cart.splice(index, 1);
+renderCart();
 }
 
 function showOrderPlacedPopup(order) {
-  var formattedDate = formatDateWithOrdinal(order.date);
-  
-  var modal = document.createElement('div');
-  modal.id = 'orderConfirmationModal';
-  modal.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:1000; padding:15px;';
+var formattedDate = formatDateWithOrdinal(order.date);
 
-  var itemsListHtml = order.items.map(function(item) {
-    var mods = item.modifiers && item.modifiers.length ? ' (' + item.modifiers.join(', ') + ')' : '';
-    return '<li>' + item.quantity + 'x ' + item.name + ' - ' + item.variant + mods + '</li>';
-  }).join('');
+var modal = document.createElement('div');
+modal.id = 'orderConfirmationModal';
+modal.style.cssText = 'position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.75); display:flex; align-items:center; justify-content:center; z-index:1000; padding:15px;';
 
-  modal.innerHTML = 
-    '<div style="background:#1e293b; color:#f8fafc; padding:24px; border-radius:12px; max-width:450px; width:100%; border:1px solid #334155; box-shadow:0 10px 25px rgba(0,0,0,0.5); text-align:center;">' +
-      '<h2 style="margin-top:0; color:#38bdf8;">🎉 Order Placed!</h2>' +
-      '<p style="text-align:left;"><strong>Name:</strong> ' + order.customerName + '</p>' +
-      '<p style="text-align:left;"><strong>Pickup Day:</strong> ' + formattedDate + '</p>' +
-      '<p style="text-align:left;"><strong>Pickup Time:</strong> ' + order.time + '</p>' +
-      '<div style="text-align:left; margin:15px 0;">' +
-        '<strong>Order Details:</strong>' +
-        '<ul style="margin:5px 0; padding-left:20px; font-size:14px; color:#cbd5e1;">' + itemsListHtml + '</ul>' +
-      '</div>' +
-      '<p style="text-align:left; font-weight:bold;">Total: $' + order.total + '</p>' +
-      '<div style="margin-top:20px; display:flex; flex-direction:column; gap:10px;">' +
-        '<button type="button" id="popupReminderBtn" class="calendar-btn" style="margin:0;">⏰ Set Reminder / Alarm</button>' +
-        '<button type="button" id="popupCloseBtn" style="background:#475569; margin:0;">Close</button>' +
-      '</div>' +
-    '</div>';
+var itemsListHtml = order.items.map(function(item) {
+var mods = item.modifiers && item.modifiers.length ? ' (' + item.modifiers.join(', ') + ')' : '';
+return '<li>' + item.quantity + 'x ' + item.name + ' - ' + item.variant + mods + '</li>';
+}).join('');
 
-  document.body.appendChild(modal);
+modal.innerHTML =
+'<div style="background:#1e293b; color:#f8fafc; padding:24px; border-radius:12px; max-width:450px; width:100%; border:1px solid #334155; box-shadow:0 10px 25px rgba(0,0,0,0.5); text-align:center;">' +
+'<h2 style="margin-top:0; color:#38bdf8;">🎉 Order Placed!</h2>' +
+'<p style="text-align:left;"><strong>Name:</strong> ' + order.customerName + '</p>' +
+'<p style="text-align:left;"><strong>Pickup Day:</strong> ' + formattedDate + '</p>' +
+'<p style="text-align:left;"><strong>Pickup Time:</strong> ' + order.time + '</p>' +
+'<div style="text-align:left; margin:15px 0;">' +
+'<strong>Order Details:</strong>' +
+'<ul style="margin:5px 0; padding-left:20px; font-size:14px; color:#cbd5e1;">' + itemsListHtml + '</ul>' +
+'</div>' +
+'<p style="text-align:left; font-weight:bold;">Total: $' + order.total + '</p>' +
+'<div style="margin-top:20px; display:flex; flex-direction:column; gap:10px;">' +
+'<button type="button" id="popupReminderBtn" class="calendar-btn" style="margin:0;">⏰ Set Reminder / Alarm</button>' +
+'<button type="button" id="popupCloseBtn" style="background:#475569; margin:0;">Close</button>' +
+'</div>' +
+'</div>';
 
-  document.getElementById('popupCloseBtn').onclick = function() {
-    modal.remove();
-  };
+document.body.appendChild(modal);
 
-  document.getElementById('popupReminderBtn').onclick = function() {
-    downloadICSFile();
-  };
+document.getElementById('popupCloseBtn').onclick = function() {
+modal.remove();
+};
+
+document.getElementById('popupReminderBtn').onclick = function() {
+downloadICSFile();
+};
 }
 
 function handleOrderSubmit(e) {
-  e.preventDefault();
-  if (cart.length === 0) {
-    showStatus("Please add at least one item before placing your order.", false);
-    return;
-  }
+e.preventDefault();
 
-  var custName = document.getElementById("customerName").value;
-  var pDate = document.getElementById("pickupDate").value;
-  var pTime = document.getElementById("pickupTime").value;
-  var instructions = document.getElementById("specialInstructions").value;
+if (!storeOpen) {
+showStatus("Sorry, online ordering is currently closed.", false);
+return;
+}
 
-  if (!pTime) {
-    showStatus("Please select a valid pickup time.", false);
-    return;
-  }
+if (cart.length === 0) {
+showStatus("Please add at least one item before placing your order.", false);
+return;
+}
 
-  var orderPayload = {
-    customerName: custName,
-    date: pDate,
-    time: pTime,
-    instructions: instructions,
-    items: cart.slice(),
-    total: document.getElementById("cartTotal").textContent
-  };
+var custName = document.getElementById("customerName").value;
+var custMobile = document.getElementById("customerMobile").value.trim();
+var pDate = document.getElementById("pickupDate").value;
+var pTime = document.getElementById("pickupTime").value;
+var instructions = document.getElementById("specialInstructions").value;
 
-  var submitBtn = document.getElementById("submit-btn");
-  submitBtn.disabled = true;
-  submitBtn.textContent = "Placing Order...";
+if (!custMobile) {
+showStatus("Please enter a mobile number so we can reach you if needed.", false);
+return;
+}
 
-  fetch(APPS_SCRIPT_URL, {
-    method: "POST",
-    body: JSON.stringify(orderPayload)
-  })
-    .then(function(res) { return res.json(); })
-    .then(function(result) {
-      if (result.status !== "success") {
-        throw new Error(result.message || "Order could not be saved.");
-      }
+if (!pTime) {
+showStatus("Please select a valid pickup time.", false);
+return;
+}
 
-      lastOrderDetails = orderPayload;
-      saveLastOrder(custName, cart.slice());
+var orderPayload = {
+customerName: custName,
+mobile: custMobile,
+date: pDate,
+time: pTime,
+instructions: instructions,
+items: cart.slice(),
+total: document.getElementById("cartTotal").textContent
+};
 
-      showOrderPlacedPopup(orderPayload);
-      document.getElementById("calendarArea").style.display = "block";
-      cart = [];
-      renderCart();
-      document.getElementById("order-form").reset();
-      initializeDatePicker();
-      populatePickupTimes();
-      resetVariantAndModifiers();
-      loadLastOrderUI();
-    })
-    .catch(function(err) {
-      showStatus("Sorry, we couldn't send your order. Please try again or let staff know. (" + err.message + ")", false);
-    })
-    .finally(function() {
-      submitBtn.disabled = false;
-      submitBtn.textContent = "Place Order";
-    });
+var submitBtn = document.getElementById("submit-btn");
+submitBtn.disabled = true;
+submitBtn.textContent = "Placing Order...";
+
+fetch(APPS_SCRIPT_URL, {
+method: "POST",
+body: JSON.stringify(orderPayload)
+})
+.then(function(res) { return res.json(); })
+.then(function(result) {
+if (result.status !== "success") {
+if (result.closed) {
+applyStoreStatus(false, result.message || "");
+}
+throw new Error(result.message || "Order could not be saved.");
+}
+
+lastOrderDetails = orderPayload;
+saveLastOrder(custName, custMobile, cart.slice());
+
+showOrderPlacedPopup(orderPayload);
+document.getElementById("calendarArea").style.display = "block";
+cart = [];
+renderCart();
+document.getElementById("order-form").reset();
+prefillCustomerDetails();
+initializeDatePicker();
+populatePickupTimes();
+resetVariantAndModifiers();
+loadLastOrderUI();
+})
+.catch(function(err) {
+showStatus("Sorry, we couldn't send your order. Please try again or let staff know. (" + err.message + ")", false);
+})
+.finally(function() {
+submitBtn.disabled = !storeOpen;
+submitBtn.textContent = storeOpen ? "Place Order" : "Ordering Closed";
+});
 }
 
 function showStatus(msg, isSuccess) {
-  var status = document.getElementById("status");
-  status.className = "status-msg " + (isSuccess ? "success" : "error");
-  status.textContent = msg;
+var status = document.getElementById("status");
+status.className = "status-msg " + (isSuccess ? "success" : "error");
+status.textContent = msg;
 }
 
 function getOrderStartEndDates() {
-  if (!lastOrderDetails) return null;
-  var parts = lastOrderDetails.date.split("-").map(Number);
-  var year = parts[0], month = parts[1], day = parts[2];
+if (!lastOrderDetails) return null;
+var parts = lastOrderDetails.date.split("-").map(Number);
+var year = parts[0], month = parts[1], day = parts[2];
 
-  var timeParts = lastOrderDetails.time.split(" ");
-  var timeStr = timeParts[0], period = timeParts[1];
-  var hm = timeStr.split(":").map(Number);
-  var hours = hm[0], minutes = hm[1];
-  if (period === "PM" && hours < 12) hours += 12;
-  if (period === "AM" && hours === 12) hours = 0;
+var timeParts = lastOrderDetails.time.split(" ");
+var timeStr = timeParts[0], period = timeParts[1];
+var hm = timeStr.split(":").map(Number);
+var hours = hm[0], minutes = hm[1];
+if (period === "PM" && hours < 12) hours += 12;
+if (period === "AM" && hours === 12) hours = 0;
 
-  var startDate = new Date(year, month - 1, day, hours, minutes);
-  var endDate = new Date(startDate.getTime() + 15 * 60000);
+var startDate = new Date(year, month - 1, day, hours, minutes);
+var endDate = new Date(startDate.getTime() + 15 * 60000);
 
-  return { startDate: startDate, endDate: endDate };
+return { startDate: startDate, endDate: endDate };
 }
 
 function addToGoogleCalendar() {
-  var dates = getOrderStartEndDates();
-  if (!dates) return;
+var dates = getOrderStartEndDates();
+if (!dates) return;
 
-  var formatISO = function(d) { return d.toISOString().replace(/-|:|\.\d\d\d/g, ""); };
-  var summaryList = lastOrderDetails.items.map(function(i) {
-    return i.quantity + "x " + i.name + " (" + i.variant + ")";
-  }).join(", ");
-  var title = encodeURIComponent("Coffee Express Pickup (" + lastOrderDetails.customerName + ")");
-  var details = encodeURIComponent("Order Details:\n" + summaryList + "\n\nInstructions: " + (lastOrderDetails.instructions || "None") + "\n\nTotal Due: $" + lastOrderDetails.total);
-  var location = encodeURIComponent("Coffee Express Pickup");
+var formatISO = function(d) { return d.toISOString().replace(/-|:|\.\d\d\d/g, ""); };
+var summaryList = lastOrderDetails.items.map(function(i) {
+return i.quantity + "x " + i.name + " (" + i.variant + ")";
+}).join(", ");
+var title = encodeURIComponent("Coffee Express Pickup (" + lastOrderDetails.customerName + ")");
+var details = encodeURIComponent("Order Details:\n" + summaryList + "\n\nInstructions: " + (lastOrderDetails.instructions || "None") + "\n\nTotal Due: $" + lastOrderDetails.total);
+var location = encodeURIComponent("Coffee Express Pickup");
 
-  var url = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + title + "&dates=" + formatISO(dates.startDate) + "/" + formatISO(dates.endDate) + "&details=" + details + "&location=" + location;
-  window.open(url, "_blank");
+var url = "https://calendar.google.com/calendar/render?action=TEMPLATE&text=" + title + "&dates=" + formatISO(dates.startDate) + "/" + formatISO(dates.endDate) + "&details=" + details + "&location=" + location;
+window.open(url, "_blank");
 }
 
 function downloadICSFile() {
-  var dates = getOrderStartEndDates();
-  if (!dates) return;
+var dates = getOrderStartEndDates();
+if (!dates) return;
 
-  var formatISO = function(d) { return d.toISOString().replace(/-|:|\.\d\d\d/g, ""); };
-  var summaryList = lastOrderDetails.items.map(function(i) {
-    return i.quantity + "x " + i.name + " (" + i.variant + ")";
-  }).join("\\n");
+var formatISO = function(d) { return d.toISOString().replace(/-|:|\.\d\d\d/g, ""); };
+var summaryList = lastOrderDetails.items.map(function(i) {
+return i.quantity + "x " + i.name + " (" + i.variant + ")";
+}).join("\\n");
 
-  var icsData = [
-    "BEGIN:VCALENDAR",
-    "VERSION:2.0",
-    "PRODID:-//Coffee Express//Order Pickup//EN",
-    "CALSCALE:GREGORIAN",
-    "METHOD:PUBLISH",
-    "BEGIN:VEVENT",
-    "SUMMARY:Coffee Express Pickup (" + lastOrderDetails.customerName + ")",
-    "DESCRIPTION:Order Summary:\\n" + summaryList + "\\nTotal Due: $" + lastOrderDetails.total,
-    "LOCATION:Coffee Express Pickup",
-    "DTSTART:" + formatISO(dates.startDate),
-    "DTEND:" + formatISO(dates.endDate),
-    "BEGIN:VALARM",
-    "TRIGGER:-PT15M",
-    "ACTION:DISPLAY",
-    "DESCRIPTION:Coffee Express order pickup reminder",
-    "END:VALARM",
-    "END:VEVENT",
-    "END:VCALENDAR"
-  ].join("\r\n");
+var icsData = [
+"BEGIN:VCALENDAR",
+"VERSION:2.0",
+"PRODID:-//Coffee Express//Order Pickup//EN",
+"CALSCALE:GREGORIAN",
+"METHOD:PUBLISH",
+"BEGIN:VEVENT",
+"SUMMARY:Coffee Express Pickup (" + lastOrderDetails.customerName + ")",
+"DESCRIPTION:Order Summary:\\n" + summaryList + "\\nTotal Due: $" + lastOrderDetails.total,
+"LOCATION:Coffee Express Pickup",
+"DTSTART:" + formatISO(dates.startDate),
+"DTEND:" + formatISO(dates.endDate),
+"BEGIN:VALARM",
+"TRIGGER:-PT15M",
+"ACTION:DISPLAY",
+"DESCRIPTION:Coffee Express order pickup reminder",
+"END:VALARM",
+"END:VEVENT",
+"END:VCALENDAR"
+].join("\r\n");
 
-  var blob = new Blob([icsData], { type: "text/calendar;charset=utf-8" });
-  var link = document.createElement("a");
-  link.href = URL.createObjectURL(blob);
-  link.download = "Coffee_Express_Pickup_" + lastOrderDetails.date + ".ics";
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+var blob = new Blob([icsData], { type: "text/calendar;charset=utf-8" });
+var link = document.createElement("a");
+link.href = URL.createObjectURL(blob);
+link.download = "Coffee_Express_Pickup_" + lastOrderDetails.date + ".ics";
+document.body.appendChild(link);
+link.click();
+document.body.removeChild(link);
 }
 
-function prefillCustomerName() {
-  var savedName = localStorage.getItem("coffeeExpress_customerName");
-  if (savedName) {
-    document.getElementById("customerName").value = savedName;
-  }
+function prefillCustomerDetails() {
+var savedName = localStorage.getItem("coffeeExpress_customerName");
+if (savedName) {
+document.getElementById("customerName").value = savedName;
+}
+var savedMobile = localStorage.getItem("coffeeExpress_customerMobile");
+if (savedMobile) {
+document.getElementById("customerMobile").value = savedMobile;
+}
 }
 
-function saveLastOrder(customerName, items) {
-  try {
-    localStorage.setItem("coffeeExpress_customerName", customerName);
-    localStorage.setItem("coffeeExpress_lastOrder", JSON.stringify({
-      customerName: customerName,
-      items: items,
-      savedAt: new Date().toISOString()
-    }));
-  } catch (e) {}
+function saveLastOrder(customerName, customerMobile, items) {
+try {
+localStorage.setItem("coffeeExpress_customerName", customerName);
+if (customerMobile) localStorage.setItem("coffeeExpress_customerMobile", customerMobile);
+localStorage.setItem("coffeeExpress_lastOrder", JSON.stringify({
+customerName: customerName,
+mobile: customerMobile,
+items: items,
+savedAt: new Date().toISOString()
+}));
+} catch (e) {}
 }
 
 function getLastOrder() {
-  try {
-    var raw = localStorage.getItem("coffeeExpress_lastOrder");
-    return raw ? JSON.parse(raw) : null;
-  } catch (e) {
-    return null;
-  }
+try {
+var raw = localStorage.getItem("coffeeExpress_lastOrder");
+return raw ? JSON.parse(raw) : null;
+} catch (e) {
+return null;
+}
 }
 
 function loadLastOrderUI() {
-  var lastOrder = getLastOrder();
-  var reorderArea = document.getElementById("reorderArea");
-  var summaryDiv = document.getElementById("reorderSummary");
+var lastOrder = getLastOrder();
+var reorderArea = document.getElementById("reorderArea");
+var summaryDiv = document.getElementById("reorderSummary");
 
-  if (!lastOrder || !lastOrder.items || lastOrder.items.length === 0) {
-    reorderArea.style.display = "none";
-    return;
-  }
+if (!lastOrder || !lastOrder.items || lastOrder.items.length === 0) {
+reorderArea.style.display = "none";
+return;
+}
 
-  var summaryText = lastOrder.items.map(function(i) {
-    return i.quantity + "x " + i.name + " (" + i.variant + ")";
-  }).join(", ");
+var summaryText = lastOrder.items.map(function(i) {
+return i.quantity + "x " + i.name + " (" + i.variant + ")";
+}).join(", ");
 
-  summaryDiv.textContent = summaryText;
-  reorderArea.style.display = "block";
+summaryDiv.textContent = summaryText;
+reorderArea.style.display = "block";
 }
 
 function reorderLastOrder() {
-  var lastOrder = getLastOrder();
-  if (!lastOrder) return;
+var lastOrder = getLastOrder();
+if (!lastOrder) return;
 
-  if (lastOrder.customerName) {
-    document.getElementById("customerName").value = lastOrder.customerName;
-  }
+if (lastOrder.customerName) {
+document.getElementById("customerName").value = lastOrder.customerName;
+}
+if (lastOrder.mobile) {
+document.getElementById("customerMobile").value = lastOrder.mobile;
+}
 
-  cart = [];
-  lastOrder.items.forEach(function(item) {
-    cart.push({
-      name: item.name,
-      variant: item.variant,
-      quantity: item.quantity,
-      unitPrice: item.unitPrice,
-      price: item.price,
-      modifiers: item.modifiers ? item.modifiers.slice() : []
-    });
-  });
+cart = [];
+lastOrder.items.forEach(function(item) {
+cart.push({
+name: item.name,
+variant: item.variant,
+quantity: item.quantity,
+unitPrice: item.unitPrice,
+price: item.price,
+modifiers: item.modifiers ? item.modifiers.slice() : []
+});
+});
 
-  renderCart();
+renderCart();
 
-  var pickupDateEl = document.getElementById("pickupDate");
-  if (pickupDateEl) {
-    pickupDateEl.scrollIntoView({ behavior: 'smooth' });
-    pickupDateEl.focus();
-  }
+var pickupDateEl = document.getElementById("pickupDate");
+if (pickupDateEl) {
+pickupDateEl.scrollIntoView({ behavior: 'smooth' });
+pickupDateEl.focus();
+}
 }
 
 function setupInstallPrompt() {
-  var installArea = document.getElementById("installArea");
-  var iosHint = document.getElementById("iosInstallHint");
+var installArea = document.getElementById("installArea");
+var iosHint = document.getElementById("iosInstallHint");
 
-  window.addEventListener("beforeinstallprompt", function(e) {
-    e.preventDefault();
-    deferredInstallPrompt = e;
-    installArea.style.display = "block";
-  });
+window.addEventListener("beforeinstallprompt", function(e) {
+e.preventDefault();
+deferredInstallPrompt = e;
+installArea.style.display = "block";
+});
 
-  var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
-  var isStandalone = window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches;
+var isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+var isStandalone = window.navigator.standalone || window.matchMedia("(display-mode: standalone)").matches;
 
-  if (isIos && !isStandalone) {
-    installArea.style.display = "block";
-    iosHint.style.display = "block";
-  }
+if (isIos && !isStandalone) {
+installArea.style.display = "block";
+iosHint.style.display = "block";
+}
 }
 
 function triggerInstall() {
-  if (deferredInstallPrompt) {
-    deferredInstallPrompt.prompt();
-    deferredInstallPrompt.userChoice.then(function() {
-      deferredInstallPrompt = null;
-    });
-  } else {
-    document.getElementById("iosInstallHint").style.display = "block";
-  }
+if (deferredInstallPrompt) {
+deferredInstallPrompt.prompt();
+deferredInstallPrompt.userChoice.then(function() {
+deferredInstallPrompt = null;
+});
+} else {
+document.getElementById("iosInstallHint").style.display = "block";
+}
 }
 
 function setupQrCode() {
-  var img = document.getElementById("qrCodeImg");
-  var url = window.location.href.split("#")[0];
-  img.src = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(url);
+var img = document.getElementById("qrCodeImg");
+var url = window.location.href.split("#")[0];
+img.src = "https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=" + encodeURIComponent(url);
 }
 
 function registerServiceWorker() {
-  if ("serviceWorker" in navigator) {
-    window.addEventListener("load", function() {
-      navigator.serviceWorker.register("sw.js").catch(function() {});
-    });
-  }
+if ("serviceWorker" in navigator) {
+window.addEventListener("load", function() {
+navigator.serviceWorker.register("sw.js").catch(function() {});
+});
+}
 }
 
 </script>
