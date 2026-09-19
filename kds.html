@@ -73,6 +73,14 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 .gate input { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #f8fafc; font-size: 18px; text-align: center; letter-spacing: 4px; margin: 12px 0; }
 .gate button { width: 100%; padding: 12px; border-radius: 8px; border: none; background: #2563eb; color: #fff; font-weight: 700; cursor: pointer; }
 .gate .err { color: #fca5a5; font-size: 13px; min-height: 18px; }
+
+/* Quick links editor */
+.links-box { background: #1e293b; border: 1px solid #334155; border-radius: 10px; padding: 12px; margin-bottom: 14px; }
+.links-box .head { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px; }
+.links-box .hint { font-size: 12px; color: #94a3b8; }
+.link-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; flex-wrap: wrap; }
+.link-row .msg-input { flex: 1; min-width: 130px; }
+.links-actions { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-top: 4px; }
 </style>
 </head>
 <body>
@@ -106,6 +114,19 @@ body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-
 <button class="small-btn" onclick="saveStoreMessage()">Save notice</button>
 </div>
 
+<div class="links-box">
+<div class="head">
+<span class="section-title" style="margin:0;">Quick links on the order page</span>
+<span class="hint">Events, cross-promotion — shown to customers on the ordering page.</span>
+</div>
+<div id="linksList"></div>
+<div class="links-actions">
+<button class="small-btn" style="background:#475569;" onclick="addLinkRow()">+ Add link</button>
+<button class="small-btn" onclick="saveLinks()">Save links</button>
+<span id="linksMsg" style="font-size:12px;"></span>
+</div>
+</div>
+
 <div class="section-title">Active orders (<span id="activeCount">0</span>)</div>
 <div id="board" class="board"></div>
 <div id="emptyActive" class="empty" style="display:none;">No active orders right now. ✅</div>
@@ -133,6 +154,8 @@ var firstLoadDone = false;
 var showCompleted = false;
 var pollTimer = null;
 var tickTimer = null;
+var links = [];
+var linksLoaded = false;
 
 /* ---------- PIN gate ---------- */
 window.addEventListener("DOMContentLoaded", function() {
@@ -237,6 +260,12 @@ pill.className = "pill";
 }
 
 function handleOrders(data) {
+// Load quick links once (don't clobber the editor on every poll).
+if (!linksLoaded && data && data.links) {
+links = data.links.slice();
+renderLinksEditor();
+linksLoaded = true;
+}
 orders = (data.orders || []).slice();
 // newest fresh detection
 var newFresh = false;
@@ -475,6 +504,79 @@ state.className = "store-state closed";
 sw.textContent = "Resume ordering";
 sw.className = "switch-btn to-open";
 }
+}
+
+/* ---------- Quick links editor ---------- */
+function escAttr(s) {
+return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/"/g, "&quot;");
+}
+
+function renderLinksEditor() {
+var list = document.getElementById("linksList");
+if (!list) return;
+list.innerHTML = "";
+if (!links.length) {
+list.innerHTML = '<div style="font-size:13px;color:#64748b;margin-bottom:8px;">No links yet — add one below.</div>';
+return;
+}
+links.forEach(function(l, i) {
+var row = document.createElement("div");
+row.className = "link-row";
+row.innerHTML =
+'<input class="msg-input link-label" placeholder="Label (e.g. What\'s on at The Gem)" value="' + escAttr(l.label) + '">' +
+'<input class="msg-input link-url" placeholder="https://…" value="' + escAttr(l.url) + '">' +
+'<button class="undo-btn" title="Remove" onclick="removeLinkRow(' + i + ')">✕</button>';
+list.appendChild(row);
+});
+}
+
+function syncLinksFromDom() {
+var rows = document.querySelectorAll("#linksList .link-row");
+links = Array.prototype.map.call(rows, function(r) {
+return {
+label: r.querySelector(".link-label").value.trim(),
+url: r.querySelector(".link-url").value.trim()
+};
+});
+}
+
+function addLinkRow() {
+syncLinksFromDom();
+links.push({ label: "", url: "" });
+renderLinksEditor();
+}
+
+function removeLinkRow(i) {
+syncLinksFromDom();
+links.splice(i, 1);
+renderLinksEditor();
+}
+
+function saveLinks() {
+syncLinksFromDom();
+var msg = document.getElementById("linksMsg");
+// Normalise: drop blank rows; add https:// if a scheme is missing.
+var clean = links
+.map(function(l) {
+var url = l.url;
+if (url && !/^https?:\/\//i.test(url) && !/^(mailto:|tel:)/i.test(url)) url = "https://" + url;
+return { label: l.label, url: url };
+})
+.filter(function(l) { return l.label && l.url; });
+msg.style.color = "#93c5fd";
+msg.textContent = "Saving…";
+postAction({ action: "setLinks", links: clean }, function(ok, res) {
+if (ok) {
+links = (res && res.links) ? res.links.slice() : clean;
+renderLinksEditor();
+msg.style.color = "#6ee7b7";
+msg.textContent = "Saved ✓";
+setTimeout(function() { msg.textContent = ""; }, 2500);
+} else {
+msg.style.color = "#fca5a5";
+msg.textContent = "Couldn't save. Try again.";
+}
+});
 }
 
 function toggleCompleted() {
