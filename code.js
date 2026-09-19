@@ -8,12 +8,14 @@
  *   POST { action:'complete', row, key }      -> mark an order done               [PIN]
  *   POST { action:'reopen',   row, key }      -> undo a completed order           [PIN]
  *   POST { action:'setStatus', open, message, key } -> set store open/closed      [PIN]
+ *   POST { action:'setLinks', links:[{label,url}], key } -> replace quick links   [PIN]
  *   POST { ...order... }                      -> save a customer order            [public]
  *
  * Script Properties used:
  *   LOYVERSE_TOKEN   - Loyverse API token (already set)
  *   ORDERS_SHEET_ID  - Coffee Orders spreadsheet id (already set)
  *   KDS_PIN          - staff PIN for the kitchen display / toggle
+ *                      (optional; falls back to DEFAULT_PIN below if unset)
  *   STORE_OPEN       - "true" / "false"  (defaults to open if unset)
  *   STORE_MESSAGE    - message shown to customers when closed
  *
@@ -24,6 +26,11 @@
  */
 
 var LOYVERSE_TOKEN = PropertiesService.getScriptProperties().getProperty("LOYVERSE_TOKEN");
+
+// Staff PIN for the kitchen board. Used only if the KDS_PIN script property
+// is not set, so the board works out of the box after deploy. Change here (or
+// set a KDS_PIN script property, which takes priority) to update it.
+var DEFAULT_PIN = "4826";
 
 var COL = {
   TIMESTAMP: 1,
@@ -54,7 +61,7 @@ function doGet(e) {
     }
     if (action === "orders") {
       requirePin_(params.key);
-      return formatOutput({ status: "success", orders: listOrders_() }, callback);
+      return formatOutput({ status: "success", orders: listOrders_(), links: getLinks_() }, callback);
     }
     // default: menu (+ store status bundled in)
     return formatOutput(getMenu_(), callback);
@@ -87,8 +94,16 @@ function doPost(e) {
       requirePin_(data.key);
       var props = PropertiesService.getScriptProperties();
       props.setProperty("STORE_OPEN", data.open ? "true" : "false");
-      props.setProperty("STORE_MESSAGE", String(data.message || ""));
-      return formatOutput({ status: "success", storeOpen: !!data.open, storeMessage: String(data.message || "") }, null);
+      // Accept either 'announcement' or the older 'message' field.
+      var ann = (typeof data.announcement !== "undefined") ? data.announcement : (data.message || "");
+      props.setProperty("ANNOUNCEMENT", String(ann));
+      return formatOutput({ status: "success", storeOpen: !!data.open, announcement: String(ann) }, null);
+    }
+
+    if (action === "setLinks") {
+      requirePin_(data.key);
+      var savedLinks = setLinks_(data.links || []);
+      return formatOutput({ status: "success", links: savedLinks }, null);
     }
 
     // default: a customer order
@@ -103,7 +118,12 @@ function doPost(e) {
 /* ------------------------------------------------------------------ */
 function getMenu_() {
   var status = getStoreStatus_();
-  var base = { storeOpen: status.storeOpen, storeMessage: status.storeMessage };
+  var base = {
+    storeOpen: status.storeOpen,
+    announcement: status.announcement,
+    storeMessage: status.announcement,
+    links: getLinks_()
+  };
 
   if (!LOYVERSE_TOKEN) {
     base.status = "success";
@@ -172,11 +192,75 @@ function getStoreStatus_() {
   var open = props.getProperty("STORE_OPEN");
   // Default to OPEN if the property has never been set.
   var isOpen = (open === null || open === undefined) ? true : (open === "true");
+  // ANNOUNCEMENT is the always-on notice; fall back to the old STORE_MESSAGE.
+  var announcement = props.getProperty("ANNOUNCEMENT");
+  if (announcement === null || announcement === undefined) {
+    announcement = props.getProperty("STORE_MESSAGE") || "";
+  }
   return {
     status: "success",
     storeOpen: isOpen,
-    storeMessage: props.getProperty("STORE_MESSAGE") || ""
+    announcement: announcement,
+    storeMessage: announcement // alias, kept for compatibility
   };
+}
+
+/**
+ * Quick links (events / cross-promotion), read from a "Links" tab in the
+ * orders spreadsheet: columns  Label | URL  (row 1 headers). Auto-creates
+ * the tab with a couple of example rows the first time.
+ */
+function getLinks_() {
+  try {
+    var props = PropertiesService.getScriptProperties();
+    var sheetId = props.getProperty("ORDERS_SHEET_ID");
+    if (!sheetId) return [];
+    var ss = SpreadsheetApp.openById(sheetId);
+    var sheet = ss.getSheetByName("Links");
+    if (!sheet) {
+      sheet = ss.insertSheet("Links");
+      sheet.getRange(1, 1, 1, 2).setValues([["Label", "URL"]]).setFontWeight("bold");
+      sheet.appendRow(["What's on at The Gem", "https://www.gemcoplayers.org"]);
+      sheet.appendRow(["Follow us on Facebook", "https://www.facebook.com/gemcoplayers"]);
+    }
+    var lastRow = sheet.getLastRow();
+    if (lastRow < 2) return [];
+    var rows = sheet.getRange(2, 1, lastRow - 1, 2).getValues();
+    var out = [];
+    rows.forEach(function (r) {
+      var label = String(r[0] || "").trim();
+      var url = String(r[1] || "").trim();
+      if (label && url) out.push({ label: label, url: url });
+    });
+    return out;
+  } catch (e) {
+    return [];
+  }
+}
+
+/**
+ * Overwrite the "Links" tab with the supplied rows. links is an array of
+ * { label, url }. PIN-gated (called from the KDS board). Returns the saved
+ * links so the board can refresh from the sheet's own view.
+ */
+function setLinks_(links) {
+  var props = PropertiesService.getScriptProperties();
+  var sheetId = props.getProperty("ORDERS_SHEET_ID");
+  if (!sheetId) throw new Error("Orders sheet not configured.");
+  var ss = SpreadsheetApp.openById(sheetId);
+  var sheet = ss.getSheetByName("Links");
+  if (!sheet) { sheet = ss.insertSheet("Links"); }
+
+  var rows = (links || []).map(function (l) {
+    return [String((l && l.label) || "").trim(), String((l && l.url) || "").trim()];
+  }).filter(function (r) { return r[0] && r[1]; });
+
+  sheet.clear();
+  sheet.getRange(1, 1, 1, 2).setValues([["Label", "URL"]]).setFontWeight("bold");
+  if (rows.length) {
+    sheet.getRange(2, 1, rows.length, 2).setValues(rows);
+  }
+  return getLinks_();
 }
 
 /* ------------------------------------------------------------------ */
@@ -221,7 +305,7 @@ function saveOrder_(data) {
     return formatOutput({
       status: "error",
       closed: true,
-      message: status.storeMessage || "Online orders are currently closed. Please try again next open day."
+      message: status.announcement || "Online ordering is currently switched off. Please try again on our next open day."
     }, null);
   }
 
@@ -350,6 +434,7 @@ function buildPickupIso_(dateStr, timeStr) {
 
 function requirePin_(key) {
   var pin = PropertiesService.getScriptProperties().getProperty("KDS_PIN");
+  if (!pin) pin = DEFAULT_PIN; // fall back to the built-in PIN so the board works without extra setup
   if (!pin) throw new Error("Staff PIN not configured.");
   if (String(key || "") !== String(pin)) throw new Error("Unauthorised.");
 }
